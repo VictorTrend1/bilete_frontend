@@ -68,14 +68,14 @@ function updateNavigation() {
 }
 
 // Authentication functions
-async function register(username, email, password) {
+async function register(username, password) {
     try {
         const response = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, email, password }),
+            body: JSON.stringify({ username, password }),
         });
 
         const data = await response.json();
@@ -122,7 +122,7 @@ function logout() {
     removeToken();
     removeUser();
     showSuccess('Logged out successfully!');
-    window.location.href = 'index.html';
+    window.location.href = 'login.html';
 }
 
 // Ticket functions
@@ -198,8 +198,34 @@ function displayTickets(tickets) {
             <p><strong>Tip bilet:</strong> <span class="ticket-type">${ticket.tip_bilet}</span></p>
             <p><strong>Data creării:</strong> ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}</p>
             <p><strong>Status:</strong> ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}</p>
+            <button class="btn btn-primary" data-id="${ticket._id || ticket.id}" onclick="viewTicketFromButton(this)">Vezi bilet</button>
         </div>
     `).join('');
+}
+
+async function viewTicketFromButton(el) {
+    const id = el.getAttribute('data-id');
+    if (!id) return;
+    try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE_URL}/tickets/${id}/qr`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Nu am putut încărca biletul');
+        }
+        showQRModal({
+            nume: data.ticket.nume,
+            telefon: data.ticket.telefon,
+            tip_bilet: data.ticket.tip_bilet,
+            qr_code: data.qr_code
+        });
+    } catch (e) {
+        showError(e.message);
+    }
 }
 
 function showQRModal(ticket) {
@@ -377,16 +403,8 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
-
-            if (password !== confirmPassword) {
-                showError('Parolele nu se potrivesc');
-                return;
-            }
-
-            await register(username, email, password);
+            await register(username, password);
         });
     }
 
