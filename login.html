@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conectare - Site Bilete</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">🎫 Site Bilete</h1>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link">Acasă</a>
+                <a href="login.html" class="nav-link active">Conectare</a>
+                <a href="register.html" class="nav-link">Înregistrare</a>
+                <a href="verificare.html" class="nav-link">Verificare</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="auth-container">
+            <div class="auth-card">
+                <h2>Conectare</h2>
+                <form id="login-form">
+                    <div class="form-group">
+                        <label for="username">Nume utilizator sau Email:</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="password">Parolă:</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Conectează-te</button>
+                </form>
+                
+                <div class="auth-links">
+                    <p>Nu ai cont? <a href="register.html">Înregistrează-te aici</a></p>
+                </div>
+                
+                <div id="error-message" class="error-message" style="display: none;"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 Site Bilete. Toate drepturile rezervate.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

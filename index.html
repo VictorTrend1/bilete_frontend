@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Bilete - Acasă</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">🎫 Site Bilete</h1>
+            <div class="nav-menu">
+                <a href="index.html" class="nav-link active">Acasă</a>
+                <a href="login.html" class="nav-link">Conectare</a>
+                <a href="register.html" class="nav-link">Înregistrare</a>
+                <a href="verificare.html" class="nav-link">Verificare</a>
+                <a href="dashboard.html" class="nav-link" id="dashboard-link" style="display: none;">Dashboard</a>
+                <button class="nav-link logout-btn" id="logout-btn" style="display: none;">Deconectare</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="hero-section">
+            <h2>Bine ați venit la Site Bilete</h2>
+            <p>Gestionați-vă biletele pentru evenimente cu ușurință</p>
+            <div class="cta-buttons">
+                <a href="register.html" class="btn btn-primary">Creează Cont</a>
+                <a href="login.html" class="btn btn-secondary">Conectează-te</a>
+            </div>
+        </div>
+
+        <div class="features-section">
+            <div class="feature-card">
+                <i class="fas fa-ticket-alt"></i>
+                <h3>Creează Bilete</h3>
+                <p>Completează formularul cu detaliile tale și generează un bilet cu QR code</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-qrcode"></i>
+                <h3>QR Code</h3>
+                <p>Fiecare bilet are un QR code unic pentru verificare rapidă</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-check-circle"></i>
+                <h3>Verificare</h3>
+                <p>Organizatorii pot scana QR code-urile pentru a verifica biletele</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2024 Site Bilete. Toate drepturile rezervate.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
