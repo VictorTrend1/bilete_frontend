@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bilete - Site Bilete</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">🎫 Site Bilete</h1>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="bilete.html" class="nav-link active">Bilete</a>
+                <a href="verificare.html" class="nav-link">Verificare</a>
+                <button class="nav-link logout-btn" id="logout-btn">Deconectare</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="tickets-container">
+            <div class="tickets-header">
+                <h2>Biletele Tale</h2>
+                <p>Toate biletele create</p>
+            </div>
+
+            <div class="tickets-table-container">
+                <table class="tickets-table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Nume</th>
+                            <th>Nr. Telefon</th>
+                            <th>Tip Bilet</th>
+                            <th>Data Creării</th>
+                            <th>Status</th>
+                            <th>Acțiuni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tickets-table-body">
+                        <!-- Tickets will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="no-tickets" class="no-tickets" style="display: none;">
+                <i class="fas fa-ticket-alt"></i>
+                <h3>Nu ai bilete încă</h3>
+                <p>Creează primul tău bilet din dashboard</p>
+                <a href="dashboard.html" class="btn btn-primary">Creează Bilet</a>
+            </div>
+        </div>
+    </main>
+
+    <!-- QR Code Modal -->
+    <div id="qr-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Biletul tău</h3>
+            <div id="qr-code-container"></div>
+            <div id="ticket-details"></div>
+            <button class="btn btn-secondary" onclick="downloadQR()">Descarcă QR Code</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>&copy; 2024 Site Bilete. Toate drepturile rezervate.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

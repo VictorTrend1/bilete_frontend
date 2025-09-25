@@ -527,6 +527,112 @@ body {
     color: #666;
 }
 
+/* Tickets Table */
+.tickets-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.tickets-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e1e5e9;
+}
+
+.tickets-header h2 {
+    color: #333;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.tickets-header p {
+    color: #666;
+}
+
+.tickets-table-container {
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.tickets-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    min-width: 800px;
+}
+
+.tickets-table th,
+.tickets-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e1e5e9;
+}
+
+.tickets-table th {
+    background: #667eea;
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.tickets-table tr:hover {
+    background: #f8f9fa;
+}
+
+.tickets-table .ticket-type {
+    background: #667eea;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    display: inline-block;
+}
+
+.tickets-table .status-verified {
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.tickets-table .status-pending {
+    color: #f39c12;
+    font-weight: 600;
+}
+
+.tickets-table .actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tickets-table .actions .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 4px;
+}
+
+.no-tickets {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.no-tickets i {
+    font-size: 4rem;
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+.no-tickets h3 {
+    color: #333;
+    margin-bottom: 0.5rem;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     .nav-container {

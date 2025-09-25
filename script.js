@@ -258,6 +258,87 @@ function downloadDataUrl(dataUrl, filename) {
     document.body.removeChild(link);
 }
 
+// Tickets table functions
+async function loadTicketsTable() {
+    try {
+        const token = getToken();
+        if (!token) {
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/tickets`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to load tickets');
+        }
+
+        displayTicketsTable(data.tickets);
+    } catch (error) {
+        console.error('Error loading tickets:', error);
+    }
+}
+
+function displayTicketsTable(tickets) {
+    const tableBody = document.getElementById('tickets-table-body');
+    const noTickets = document.getElementById('no-tickets');
+    
+    if (!tableBody) return;
+
+    if (tickets.length === 0) {
+        tableBody.innerHTML = '';
+        if (noTickets) noTickets.style.display = 'block';
+        return;
+    }
+
+    if (noTickets) noTickets.style.display = 'none';
+
+    tableBody.innerHTML = tickets.map((ticket, index) => `
+        <tr>
+            <td>${index + 1}</td>
+            <td>${ticket.nume}</td>
+            <td>${ticket.telefon}</td>
+            <td><span class="ticket-type">${ticket.tip_bilet}</span></td>
+            <td>${new Date(ticket.created_at).toLocaleDateString('ro-RO')}</td>
+            <td class="${ticket.verified ? 'status-verified' : 'status-pending'}">
+                ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}
+            </td>
+            <td class="actions">
+                <button class="btn btn-secondary" data-id="${ticket._id || ticket.id}" onclick="downloadTicketQRFromButton(this)">
+                    <i class="fas fa-download"></i> Descarcă cod QR
+                </button>
+                <button class="btn btn-primary" data-ticket='${JSON.stringify(ticket).replace(/'/g, "&apos;")}' onclick="sendTicketViaWhatsApp(this)">
+                    <i class="fab fa-whatsapp"></i> Trimite bilet prin SMS
+                </button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function sendTicketViaWhatsApp(el) {
+    try {
+        const ticket = JSON.parse(el.getAttribute('data-ticket').replace(/&apos;/g, "'"));
+        const phoneNumber = ticket.telefon.replace(/\D/g, ''); // Remove non-digits
+        const message = `Biletul tău pentru eveniment:\n\nNume: ${ticket.nume}\nTip bilet: ${ticket.tip_bilet}\nData creării: ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}\n\nTe rugăm să păstrezi acest bilet pentru verificare.`;
+        
+        // WhatsApp Web URL
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        
+        // Open WhatsApp in new tab
+        window.open(whatsappUrl, '_blank');
+        
+        showSuccess('WhatsApp deschis pentru trimiterea biletului!');
+    } catch (e) {
+        console.error('Failed to parse ticket data', e);
+        showError('Eroare la trimiterea biletului prin WhatsApp');
+    }
+}
+
 function showQRModal(ticket) {
     const modal = document.getElementById('qr-modal');
     const qrContainer = document.getElementById('qr-code-container');
@@ -529,8 +610,13 @@ document.addEventListener('DOMContentLoaded', function() {
         loadTickets();
     }
 
-    // Redirect to login if not authenticated and trying to access dashboard
-    if (window.location.pathname.includes('dashboard.html') && !isLoggedIn()) {
+    // Load tickets table on bilete page
+    if (window.location.pathname.includes('bilete.html')) {
+        loadTicketsTable();
+    }
+
+    // Redirect to login if not authenticated and trying to access dashboard or bilete
+    if ((window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('bilete.html')) && !isLoggedIn()) {
         window.location.href = 'login.html';
     }
 });
