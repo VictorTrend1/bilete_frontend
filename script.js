@@ -364,18 +364,23 @@ async function sendTicketViaWhatsApp(el) {
             </div>
         `;
         
-        // Try Web Share API with QR as a file; fallback to WhatsApp text with QR link
+        // Prepare a public QR URL to include in text
+        const id = ticket._id || ticket.id;
+        const qrPublicUrl = `${API_BASE_URL.replace('/api','')}/api/tickets/${id}/qr.png`;
+
+        // Try Web Share API with QR as a file; also ensure the text is available to the user
         const qrBlob = await (await fetch(data.qr_code)).blob();
         const qrFile = new File([qrBlob], 'bilet-qr.png', { type: 'image/png' });
 
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [qrFile] })) {
             try {
-                await navigator.share({
-                    title: 'Bilet Eveniment',
-                    text: message,
-                    files: [qrFile]
-                });
-                showSuccess('Mesaj trimis prin share sheet!');
+                await navigator.share({ title: 'Bilet Eveniment', text: message, files: [qrFile] });
+                // Copy full text (including QR link) to clipboard in case the share target omits text
+                const messageWithLink = `${message}\n\nQR Code: ${qrPublicUrl}`;
+                if (navigator.clipboard && window.isSecureContext) {
+                    try { await navigator.clipboard.writeText(messageWithLink); } catch (_) {}
+                }
+                showSuccess('Imaginea QR a fost partajată. Textul a fost copiat în clipboard.');
                 return;
             } catch (e) {
                 // fall through to WhatsApp link
@@ -383,8 +388,6 @@ async function sendTicketViaWhatsApp(el) {
         }
 
         // Fallback: send WhatsApp with text + link to QR image hosted by backend
-        const id = ticket._id || ticket.id;
-        const qrPublicUrl = `${API_BASE_URL.replace('/api','')}/api/tickets/${id}/qr.png`;
         const messageWithLink = `${message}\n\nQR Code: ${qrPublicUrl}`;
         const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messageWithLink)}`;
         window.open(whatsappUrl, '_blank');
