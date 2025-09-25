@@ -461,12 +461,21 @@ body {
     text-align: center;
 }
 
-#scanner {
-    width: 100%;
-    max-width: 400px;
-    height: 300px;
-    background: #000;
+/* Html5-qrcode responsive container */
+#qr-reader, #qr-reader__dashboard_section_csr {
+    width: 100% !important;
+}
+
+#qr-reader video {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: cover;
     border-radius: 8px;
+}
+
+#qr-reader__scan_region {
+    width: 100% !important;
+    max-width: 600px;
     margin: 0 auto;
 }
 

@@ -309,6 +309,9 @@ function displayTicketsTable(tickets) {
                 ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}
             </td>
             <td class="actions">
+                <button class="btn btn-primary" data-id="${ticket._id || ticket.id}" onclick="viewTicketFromButton(this)">
+                    <i class="fas fa-eye"></i> Vezi biletul
+                </button>
                 <button class="btn btn-secondary" data-id="${ticket._id || ticket.id}" onclick="downloadTicketQRFromButton(this)">
                     <i class="fas fa-download"></i> Descarcă cod QR
                 </button>
@@ -431,8 +434,9 @@ function showVerificationResult(ticket, success, errorMessage = null) {
 
 // QR Code Scanner
 let scannerActive = false;
+let html5QrCodeInstance = null;
 
-function startScanner() {
+async function startScanner() {
     if (scannerActive) return;
 
     const scannerContainer = document.getElementById('scanner-container');
@@ -445,60 +449,51 @@ function startScanner() {
     startBtn.style.display = 'none';
     stopBtn.style.display = 'inline-block';
 
-    Quagga.init({
-        inputStream: {
-            name: "Live",
-            type: "LiveStream",
-            target: document.querySelector('#scanner'),
-            constraints: {
-                width: 400,
-                height: 300,
-                facingMode: "environment"
+    try {
+        const config = {
+            fps: 15,
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                const boxSize = Math.floor(minEdge * 0.7);
+                return { width: boxSize, height: boxSize };
             },
-        },
-        decoder: {
-            readers: [
-                "code_128_reader",
-                "ean_reader",
-                "ean_8_reader",
-                "code_39_reader",
-                "code_39_vin_reader",
-                "codabar_reader",
-                "upc_reader",
-                "upc_e_reader",
-                "i2of5_reader"
-            ]
-        },
-    }, function(err) {
-        if (err) {
-            console.error('Scanner initialization error:', err);
-            showError('Eroare la inițializarea scanner-ului');
-            stopScanner();
-            return;
-        }
-        console.log("Initialization finished. Ready to start");
-        Quagga.start();
-        scannerActive = true;
-    });
+            aspectRatio: window.innerWidth < 600 ? undefined : 1.7778,
+            experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+        };
 
-    Quagga.onDetected(function(data) {
-        console.log('QR Code detected:', data.codeResult.code);
-        try {
-            // Try to parse as JSON (our QR format)
-            const qrData = JSON.parse(data.codeResult.code);
-            verifyTicket(data.codeResult.code);
-            stopScanner();
-        } catch (e) {
-            // If not JSON, treat as plain text
-            verifyTicket(data.codeResult.code);
-            stopScanner();
-        }
-    });
+        html5QrCodeInstance = new Html5Qrcode("qr-reader");
+        const cameras = await Html5Qrcode.getCameras();
+        let cameraId = cameras && cameras.length ? cameras[0].id : null;
+        // Prefer back camera if available
+        const back = cameras.find(c => /back|rear|environment/i.test(c.label));
+        if (back) cameraId = back.id;
+
+        await html5QrCodeInstance.start(
+            { deviceId: { exact: cameraId } },
+            config,
+            (decodedText) => {
+                if (!decodedText) return;
+                try {
+                    JSON.parse(decodedText);
+                    verifyTicket(decodedText);
+                } catch (_) {
+                    verifyTicket(decodedText);
+                }
+                stopScanner();
+            },
+            (errMsg) => {
+                // ignore scan errors; common on mobile while focusing
+            }
+        );
+        scannerActive = true;
+    } catch (err) {
+        console.error('Scanner init failed', err);
+        showError('Nu s-a putut porni camera. Verifică permisiunile.');
+        stopScanner();
+    }
 }
 
-function stopScanner() {
-    if (!scannerActive) return;
-
+async function stopScanner() {
     const scannerContainer = document.getElementById('scanner-container');
     const startBtn = document.getElementById('start-scanner');
     const stopBtn = document.getElementById('stop-scanner');
@@ -507,7 +502,12 @@ function stopScanner() {
     if (startBtn) startBtn.style.display = 'inline-block';
     if (stopBtn) stopBtn.style.display = 'none';
 
-    Quagga.stop();
+    try {
+        if (html5QrCodeInstance) {
+            await html5QrCodeInstance.stop();
+            await html5QrCodeInstance.clear();
+        }
+    } catch (_) {}
     scannerActive = false;
 }
 
