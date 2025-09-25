@@ -68,14 +68,14 @@ function updateNavigation() {
 }
 
 // Authentication functions
-async function register(username, password) {
+async function register(username, password, referralCode) {
     try {
         const response = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, password }),
+            body: JSON.stringify({ username, password, referralCode }),
         });
 
         const data = await response.json();
@@ -523,7 +523,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            await register(username, password);
+            const referralCode = document.getElementById('referralCode').value;
+            await register(username, password, referralCode);
         });
     }
 
@@ -611,8 +612,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = getUser();
         if (user) {
             const userNameElement = document.getElementById('user-name');
+            const userReferralElement = document.getElementById('user-referral-code');
             if (userNameElement) {
                 userNameElement.textContent = user.username;
+            }
+            if (userReferralElement && user.referralCode) {
+                userReferralElement.textContent = user.referralCode;
             }
         }
     }
