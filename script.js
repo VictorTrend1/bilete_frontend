@@ -320,7 +320,7 @@ function displayTicketsTable(tickets) {
     `).join('');
 }
 
-async function sendTicketViaWhatsApp(el) {
+function sendTicketViaWhatsApp(el) {
     try {
         const ticket = JSON.parse(el.getAttribute('data-ticket').replace(/&apos;/g, "'"));
         let phoneNumber = ticket.telefon.replace(/\D/g, ''); // Remove non-digits
@@ -334,65 +334,13 @@ async function sendTicketViaWhatsApp(el) {
             phoneNumber = '+40' + phoneNumber;
         }
         
-        // Get QR code image
-        const token = getToken();
-        const response = await fetch(`${API_BASE_URL}/tickets/${ticket._id || ticket.id}/qr`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(data.error || 'Nu am putut încărca QR-ul');
-        }
-        
         const message = `Biletul tău pentru eveniment:\n\nNume: ${ticket.nume}\nTip bilet: ${ticket.tip_bilet}\nData creării: ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}\n\nTe rugăm să păstrezi acest bilet pentru verificare.`;
         
-        // Create a temporary div to hold the message and QR image
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = `
-            <div style="font-family: Arial, sans-serif; max-width: 300px; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background: white;">
-                <h3 style="color: #333; margin-bottom: 15px;">🎫 Bilet Eveniment</h3>
-                <p><strong>Nume:</strong> ${ticket.nume}</p>
-                <p><strong>Telefon:</strong> ${ticket.telefon}</p>
-                <p><strong>Tip bilet:</strong> ${ticket.tip_bilet}</p>
-                <p><strong>Data creării:</strong> ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}</p>
-                <p><strong>Status:</strong> ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}</p>
-                <div style="text-align: center; margin: 15px 0;">
-                    <img src="${data.qr_code}" alt="QR Code" style="max-width: 200px; border: 1px solid #ddd; border-radius: 5px;">
-                </div>
-                <p style="font-size: 12px; color: #666; text-align: center;">Scanează QR code-ul pentru verificare</p>
-            </div>
-        `;
-        
-        // Prepare a public QR URL to include in text
-        const id = ticket._id || ticket.id;
-        const qrPublicUrl = `${API_BASE_URL.replace('/api','')}/api/tickets/${id}/qr.png`;
-
-        // Try Web Share API with QR as a file; also ensure the text is available to the user
-        const qrBlob = await (await fetch(data.qr_code)).blob();
-        const qrFile = new File([qrBlob], 'bilet-qr.png', { type: 'image/png' });
-
-        if (navigator.share && navigator.canShare && navigator.canShare({ files: [qrFile] })) {
-            try {
-                await navigator.share({ title: 'Bilet Eveniment', text: message, files: [qrFile] });
-                // Copy full text (including QR link) to clipboard in case the share target omits text
-                const messageWithLink = `${message}\n\nQR Code: ${qrPublicUrl}`;
-                if (navigator.clipboard && window.isSecureContext) {
-                    try { await navigator.clipboard.writeText(messageWithLink); } catch (_) {}
-                }
-                showSuccess('Imaginea QR a fost partajată. Textul a fost copiat în clipboard.');
-                return;
-            } catch (e) {
-                // fall through to WhatsApp link
-            }
-        }
-
-        // Fallback: send WhatsApp with text + link to QR image hosted by backend
-        const messageWithLink = `${message}\n\nQR Code: ${qrPublicUrl}`;
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messageWithLink)}`;
+        // Open WhatsApp with text message only
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
         window.open(whatsappUrl, '_blank');
         
-        showSuccess('WhatsApp deschis pentru trimiterea biletului cu QR code!');
+        showSuccess('WhatsApp deschis! Adaugă manual QR code-ul din bilet.');
     } catch (e) {
         console.error('Failed to send ticket via WhatsApp', e);
         showError('Eroare la trimiterea biletului prin WhatsApp');
