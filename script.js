@@ -364,20 +364,30 @@ async function sendTicketViaWhatsApp(el) {
             </div>
         `;
         
-        // Convert to image using html2canvas (if available) or fallback to text
-        if (typeof html2canvas !== 'undefined') {
-            html2canvas(tempDiv.firstElementChild).then(canvas => {
-                const qrImageData = canvas.toDataURL('image/png');
-                const messageWithImage = `${message}\n\nQR Code: ${qrImageData}`;
-                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messageWithImage)}`;
-                window.open(whatsappUrl, '_blank');
-            });
-        } else {
-            // Fallback: send text message with QR code data URL
-            const messageWithQR = `${message}\n\nQR Code: ${data.qr_code}`;
-            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messageWithQR)}`;
-            window.open(whatsappUrl, '_blank');
+        // Try Web Share API with QR as a file; fallback to WhatsApp text with QR link
+        const qrBlob = await (await fetch(data.qr_code)).blob();
+        const qrFile = new File([qrBlob], 'bilet-qr.png', { type: 'image/png' });
+
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [qrFile] })) {
+            try {
+                await navigator.share({
+                    title: 'Bilet Eveniment',
+                    text: message,
+                    files: [qrFile]
+                });
+                showSuccess('Mesaj trimis prin share sheet!');
+                return;
+            } catch (e) {
+                // fall through to WhatsApp link
+            }
         }
+
+        // Fallback: send WhatsApp with text + link to QR image hosted by backend
+        const id = ticket._id || ticket.id;
+        const qrPublicUrl = `${API_BASE_URL.replace('/api','')}/api/tickets/${id}/qr.png`;
+        const messageWithLink = `${message}\n\nQR Code: ${qrPublicUrl}`;
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messageWithLink)}`;
+        window.open(whatsappUrl, '_blank');
         
         showSuccess('WhatsApp deschis pentru trimiterea biletului cu QR code!');
     } catch (e) {
