@@ -68,14 +68,14 @@ function updateNavigation() {
 }
 
 // Authentication functions
-async function register(username, password, referralCode) {
+async function register(username, password) {
     try {
         const response = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, password, referralCode }),
+            body: JSON.stringify({ username, password }),
         });
 
         const data = await response.json();
@@ -257,6 +257,7 @@ function downloadDataUrl(dataUrl, filename) {
     link.click();
     document.body.removeChild(link);
 }
+
 
 // Tickets table functions
 async function loadTicketsTable() {
@@ -523,8 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const referralCode = document.getElementById('referralCode').value;
-            await register(username, password, referralCode);
+            await register(username, password);
         });
     }
 
@@ -633,7 +633,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load user data on dashboard
     if (window.location.pathname.includes('dashboard.html')) {
-        loadUserProfile();
+        const user = getUser();
+        if (user) {
+            const userNameElement = document.getElementById('user-name');
+            if (userNameElement) {
+                userNameElement.textContent = user.username;
+            }
+        }
     }
 
     // Load tickets table on bilete page
