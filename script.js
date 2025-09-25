@@ -198,7 +198,10 @@ function displayTickets(tickets) {
             <p><strong>Tip bilet:</strong> <span class="ticket-type">${ticket.tip_bilet}</span></p>
             <p><strong>Data creării:</strong> ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}</p>
             <p><strong>Status:</strong> ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}</p>
-            <button class="btn btn-primary" data-id="${ticket._id || ticket.id}" onclick="viewTicketFromButton(this)">Vezi bilet</button>
+            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:0.5rem;">
+                <button class="btn btn-primary" data-id="${ticket._id || ticket.id}" onclick="viewTicketFromButton(this)">Vezi bilet</button>
+                <button class="btn btn-secondary" data-id="${ticket._id || ticket.id}" onclick="downloadTicketQRFromButton(this)">Descarcă QR</button>
+            </div>
         </div>
     `).join('');
 }
@@ -226,6 +229,33 @@ async function viewTicketFromButton(el) {
     } catch (e) {
         showError(e.message);
     }
+}
+
+async function downloadTicketQRFromButton(el) {
+    const id = el.getAttribute('data-id');
+    if (!id) return;
+    try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE_URL}/tickets/${id}/qr`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || 'Nu am putut descărca QR-ul');
+        }
+        downloadDataUrl(data.qr_code, `bilet-${id}.png`);
+    } catch (e) {
+        showError(e.message);
+    }
+}
+
+function downloadDataUrl(dataUrl, filename) {
+    const link = document.createElement('a');
+    link.href = dataUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 function showQRModal(ticket) {
