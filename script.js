@@ -320,21 +320,68 @@ function displayTicketsTable(tickets) {
     `).join('');
 }
 
-function sendTicketViaWhatsApp(el) {
+async function sendTicketViaWhatsApp(el) {
     try {
         const ticket = JSON.parse(el.getAttribute('data-ticket').replace(/&apos;/g, "'"));
-        const phoneNumber = ticket.telefon.replace(/\D/g, ''); // Remove non-digits
+        let phoneNumber = ticket.telefon.replace(/\D/g, ''); // Remove non-digits
+        
+        // Format Romanian phone number
+        if (phoneNumber.startsWith('0')) {
+            // If starts with 0, replace with +40
+            phoneNumber = '+40' + phoneNumber.substring(1);
+        } else if (!phoneNumber.startsWith('+40')) {
+            // If doesn't start with +40, add it
+            phoneNumber = '+40' + phoneNumber;
+        }
+        
+        // Get QR code image
+        const token = getToken();
+        const response = await fetch(`${API_BASE_URL}/tickets/${ticket._id || ticket.id}/qr`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Nu am putut încărca QR-ul');
+        }
+        
         const message = `Biletul tău pentru eveniment:\n\nNume: ${ticket.nume}\nTip bilet: ${ticket.tip_bilet}\nData creării: ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}\n\nTe rugăm să păstrezi acest bilet pentru verificare.`;
         
-        // WhatsApp Web URL
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        // Create a temporary div to hold the message and QR image
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = `
+            <div style="font-family: Arial, sans-serif; max-width: 300px; padding: 20px; border: 1px solid #ddd; border-radius: 10px; background: white;">
+                <h3 style="color: #333; margin-bottom: 15px;">🎫 Bilet Eveniment</h3>
+                <p><strong>Nume:</strong> ${ticket.nume}</p>
+                <p><strong>Telefon:</strong> ${ticket.telefon}</p>
+                <p><strong>Tip bilet:</strong> ${ticket.tip_bilet}</p>
+                <p><strong>Data creării:</strong> ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}</p>
+                <p><strong>Status:</strong> ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}</p>
+                <div style="text-align: center; margin: 15px 0;">
+                    <img src="${data.qr_code}" alt="QR Code" style="max-width: 200px; border: 1px solid #ddd; border-radius: 5px;">
+                </div>
+                <p style="font-size: 12px; color: #666; text-align: center;">Scanează QR code-ul pentru verificare</p>
+            </div>
+        `;
         
-        // Open WhatsApp in new tab
-        window.open(whatsappUrl, '_blank');
+        // Convert to image using html2canvas (if available) or fallback to text
+        if (typeof html2canvas !== 'undefined') {
+            html2canvas(tempDiv.firstElementChild).then(canvas => {
+                const qrImageData = canvas.toDataURL('image/png');
+                const messageWithImage = `${message}\n\nQR Code: ${qrImageData}`;
+                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messageWithImage)}`;
+                window.open(whatsappUrl, '_blank');
+            });
+        } else {
+            // Fallback: send text message with QR code data URL
+            const messageWithQR = `${message}\n\nQR Code: ${data.qr_code}`;
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(messageWithQR)}`;
+            window.open(whatsappUrl, '_blank');
+        }
         
-        showSuccess('WhatsApp deschis pentru trimiterea biletului!');
+        showSuccess('WhatsApp deschis pentru trimiterea biletului cu QR code!');
     } catch (e) {
-        console.error('Failed to parse ticket data', e);
+        console.error('Failed to send ticket via WhatsApp', e);
         showError('Eroare la trimiterea biletului prin WhatsApp');
     }
 }
@@ -598,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Load user data and tickets on dashboard
+    // Load user data on dashboard
     if (window.location.pathname.includes('dashboard.html')) {
         const user = getUser();
         if (user) {
@@ -607,7 +654,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 userNameElement.textContent = user.username;
             }
         }
-        loadTickets();
     }
 
     // Load tickets table on bilete page

@@ -616,6 +616,16 @@ body {
     border-radius: 4px;
 }
 
+.tickets-table .actions .btn.btn-secondary {
+    background: #e74c3c;
+    color: white;
+    border: none;
+}
+
+.tickets-table .actions .btn.btn-secondary:hover {
+    background: #c0392b;
+}
+
 .no-tickets {
     text-align: center;
     padding: 3rem;
