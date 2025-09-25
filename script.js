@@ -633,17 +633,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Load user data on dashboard
     if (window.location.pathname.includes('dashboard.html')) {
-        const user = getUser();
-        if (user) {
-            const userNameElement = document.getElementById('user-name');
-            const userReferralElement = document.getElementById('user-referral-code');
-            if (userNameElement) {
-                userNameElement.textContent = user.username;
-            }
-            if (userReferralElement && user.referralCode) {
-                userReferralElement.textContent = user.referralCode;
-            }
-        }
+        loadUserProfile();
     }
 
     // Load tickets table on bilete page
