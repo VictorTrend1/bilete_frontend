@@ -301,6 +301,27 @@ body {
     border-radius: 12px;
 }
 
+.generator-section {
+    background: #f8f9fa;
+    padding: 2rem;
+    border-radius: 12px;
+}
+
+.generator-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.generator-input {
+    flex: 1;
+    padding: 0.9rem 1rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
 .ticket-form-section h3,
 .tickets-section h3 {
     color: #333;
