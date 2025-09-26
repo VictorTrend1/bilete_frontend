@@ -70,25 +70,37 @@ function updateNavigation() {
 // Authentication functions
 async function register(username, password) {
     try {
+        console.log('Attempting registration with:', { username, password: '***' });
+        
         const response = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, password}),
+            body: JSON.stringify({ 
+                username: username.trim(), 
+                password: password 
+            }),
         });
 
         const data = await response.json();
+        console.log('Registration response:', data);
 
         if (!response.ok) {
             throw new Error(data.error || 'Registration failed');
         }
 
-        setToken(data.token);
-        setUser(data.user);
-        showSuccess('Registration successful!');
-        window.location.href = 'dashboard.html';
+        if (data.success) {
+            setToken(data.token);
+            setUser(data.user);
+            showSuccess('Registration successful!');
+            window.location.href = 'dashboard.html';
+        } else {
+            throw new Error(data.error || 'Registration failed');
+        }
+        
     } catch (error) {
+        console.error('Registration error:', error);
         showError(error.message);
     }
 }
