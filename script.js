@@ -166,7 +166,9 @@ async function createTicket(nume, telefon, tip_bilet) {
             throw new Error(data.error || 'Failed to create ticket');
         }
 
-        showSuccess('Ticket created successfully!');
+        const user = getUser();
+        const groupInfo = user && user.group ? ` pentru ${user.group}` : '';
+        showSuccess(`Bilet creat cu succes${groupInfo}!`);
         showQRModal(data.ticket);
         loadTickets();
         document.getElementById('ticket-form').reset();
@@ -323,6 +325,7 @@ function displayTicketsTable(tickets) {
             <td>${ticket.nume}</td>
             <td>${ticket.telefon}</td>
             <td><span class="ticket-type">${ticket.tip_bilet}</span></td>
+            <td><span class="group-badge">${ticket.group || 'N/A'}</span></td>
             <td>${new Date(ticket.created_at).toLocaleDateString('ro-RO')}</td>
             <td class="${ticket.verified ? 'status-verified' : 'status-pending'}">
                 ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}
@@ -379,11 +382,15 @@ function showQRModal(ticket) {
     }
 
     if (ticketDetails) {
+        const user = getUser();
+        const groupInfo = user && user.group ? `<p><strong>Grup:</strong> ${user.group}</p>` : '';
+        
         ticketDetails.innerHTML = `
             <h4>Detalii bilet</h4>
             <p><strong>Nume:</strong> ${ticket.nume}</p>
             <p><strong>Telefon:</strong> ${ticket.telefon}</p>
             <p><strong>Tip bilet:</strong> ${ticket.tip_bilet}</p>
+            ${groupInfo}
         `;
     }
 
@@ -419,25 +426,43 @@ async function verifyTicket(qrData) {
             throw new Error(data.error || 'Verification failed');
         }
 
-        showVerificationResult(data.ticket, true);
+        showVerificationResult(data.ticket, true, null, data);
     } catch (error) {
         showVerificationResult(null, false, error.message);
     }
 }
 
-function showVerificationResult(ticket, success, errorMessage = null) {
+function showVerificationResult(ticket, success, errorMessage = null, responseData = null) {
     const resultDiv = document.getElementById('verification-result');
     if (!resultDiv) return;
 
     if (success && ticket) {
-        resultDiv.className = 'verification-result success';
+        let warningHtml = '';
+        let resultClass = 'success';
+        
+        // Check if ticket is flagged (verified multiple times)
+        if (responseData && responseData.flagged) {
+            resultClass = 'warning';
+            warningHtml = `
+                <div class="fraud-warning" style="background: #ff4444; color: white; padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: center; font-weight: bold; animation: pulse 1s infinite;">
+                    <h4>🚨 ATENȚIE: BILET SUSPECT! 🚨</h4>
+                    <p>${responseData.warning || 'Acest bilet a fost deja validat anterior!'}</p>
+                    <p><strong>Numărul de verificări:</strong> ${responseData.verification_count || ticket.verification_count}</p>
+                    ${responseData.ticket && responseData.ticket.first_verified ? `<p><strong>Prima verificare:</strong> ${new Date(responseData.ticket.first_verified).toLocaleString('ro-RO')}</p>` : ''}
+                </div>
+            `;
+        }
+
+        resultDiv.className = `verification-result ${resultClass}`;
         resultDiv.innerHTML = `
             <h4>✅ Bilet Verificat cu Succes!</h4>
+            ${warningHtml}
             <div class="ticket-info">
                 <p><strong>Nume:</strong> ${ticket.nume}</p>
                 <p><strong>Telefon:</strong> ${ticket.telefon}</p>
                 <p><strong>Tip bilet:</strong> ${ticket.tip_bilet}</p>
                 <p><strong>Data creării:</strong> ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}</p>
+                ${ticket.verification_count ? `<p><strong>Verificări:</strong> ${ticket.verification_count}</p>` : ''}
             </div>
         `;
     } else {
@@ -656,11 +681,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (user) {
             const userNameElement = document.getElementById('user-name');
             const userGroupElement = document.getElementById('user-group');
+            const userGroupDisplayElement = document.getElementById('user-group-display');
+            
             if (userNameElement) {
                 userNameElement.textContent = user.username;
             }
             if (userGroupElement && user.group) {
                 userGroupElement.textContent = user.group;
+            }
+            if (userGroupDisplayElement && user.group) {
+                userGroupDisplayElement.textContent = user.group;
             }
         }
     }
