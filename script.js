@@ -494,39 +494,91 @@ async function startScanner() {
     stopBtn.style.display = 'inline-block';
 
     try {
+        // Optimize config for mobile devices
+        const isMobile = window.innerWidth < 768;
+        const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
+        
         const config = {
-            fps: 15,
+            fps: isMobile ? 10 : (isTablet ? 20 : 15), // Lower FPS on mobile for better performance
             qrbox: function(viewfinderWidth, viewfinderHeight) {
                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                const boxSize = Math.floor(minEdge * 0.7);
+                // Larger scanning area on mobile for better detection
+                const boxSize = Math.floor(minEdge * (isMobile ? 0.8 : 0.7));
                 return { width: boxSize, height: boxSize };
             },
-            aspectRatio: window.innerWidth < 600 ? undefined : 1.7778,
-            experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+            aspectRatio: isMobile ? undefined : (isTablet ? 1.7778 : 1.3333),
+            experimentalFeatures: { 
+                useBarCodeDetectorIfSupported: true,
+                useZxing: isMobile // Use ZXing on mobile for better performance
+            },
+            // Mobile-specific optimizations
+            ...(isMobile && {
+                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+                showTorchButtonIfSupported: true,
+                showZoomSliderIfSupported: true,
+                defaultZoomValueIfSupported: 2,
+                useTorch: false
+            })
         };
 
         html5QrCodeInstance = new Html5Qrcode("qr-reader");
         const cameras = await Html5Qrcode.getCameras();
         let cameraId = cameras && cameras.length ? cameras[0].id : null;
-        // Prefer back camera if available
-        const back = cameras.find(c => /back|rear|environment/i.test(c.label));
-        if (back) cameraId = back.id;
+        
+        // Better camera selection for mobile
+        if (isMobile) {
+            // Prefer back camera on mobile for better QR scanning
+            const back = cameras.find(c => /back|rear|environment/i.test(c.label));
+            if (back) {
+                cameraId = back.id;
+            } else {
+                // Try to find camera with higher resolution
+                const highRes = cameras.find(c => c.label.includes('4K') || c.label.includes('1080'));
+                if (highRes) cameraId = highRes.id;
+            }
+        } else {
+            // For tablets/desktop, prefer back camera if available
+            const back = cameras.find(c => /back|rear|environment/i.test(c.label));
+            if (back) cameraId = back.id;
+        }
+
+        // Mobile-specific start configuration
+        const startConfig = isMobile ? 
+            { deviceId: { exact: cameraId }, facingMode: "environment" } :
+            { deviceId: { exact: cameraId } };
 
         await html5QrCodeInstance.start(
-            { deviceId: { exact: cameraId } },
+            startConfig,
             config,
             (decodedText) => {
                 if (!decodedText) return;
-                try {
-                    JSON.parse(decodedText);
-                    verifyTicket(decodedText);
-                } catch (_) {
-                    verifyTicket(decodedText);
+                
+                // Add small delay on mobile to prevent rapid scanning
+                if (isMobile) {
+                    setTimeout(() => {
+                        try {
+                            JSON.parse(decodedText);
+                            verifyTicket(decodedText);
+                        } catch (_) {
+                            verifyTicket(decodedText);
+                        }
+                        stopScanner();
+                    }, 100);
+                } else {
+                    try {
+                        JSON.parse(decodedText);
+                        verifyTicket(decodedText);
+                    } catch (_) {
+                        verifyTicket(decodedText);
+                    }
+                    stopScanner();
                 }
-                stopScanner();
             },
             (errMsg) => {
-                // ignore scan errors; common on mobile while focusing
+                // Reduce error logging on mobile to improve performance
+                if (!isMobile) {
+                    console.log("QR scan error:", errMsg);
+                }
             }
         );
         scannerActive = true;
