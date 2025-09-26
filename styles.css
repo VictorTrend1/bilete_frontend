@@ -1379,20 +1379,96 @@ body {
 }
 
 @media (max-width: 480px) {
+    /* Mobile-first hard reset overrides */
+    html, body {
+        width: 100%;
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+    }
+
+    .nav-container {
+        padding: 0.5rem 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .nav-menu {
+        gap: 0.5rem;
+        flex-wrap: nowrap;
+    }
+
     .main-content {
+        padding: 0.75rem;
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+    }
+
+    .dashboard-container,
+    .tickets-container,
+    .verification-card,
+    .auth-card {
+        margin: 0.5rem;
         padding: 1rem;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
-    .hero-section {
-        padding: 2rem 0;
+    .dashboard-content {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
 
-    .hero-section h2 {
-        font-size: 1.5rem;
+    .ticket-form-section,
+    .tickets-section,
+    .scanner-container {
+        padding: 0.75rem;
+        border-radius: 8px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 
-    .auth-card,
-    .verification-card {
-        padding: 1.5rem;
+    .form-group {
+        margin-bottom: 1rem;
+        width: 100%;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        max-width: 100%;
+        font-size: 16px;
+        padding: 0.875rem;
+        box-sizing: border-box;
+    }
+
+    .btn {
+        width: 100%;
+        padding: 0.875rem 1rem;
+        font-size: 0.95rem;
+        margin: 0.25rem 0;
+    }
+
+    .tickets-table-container {
+        margin: 0 -0.75rem;
+        border-radius: 0;
+    }
+
+    .tickets-table {
+        min-width: 560px;
+        font-size: 0.9rem;
+    }
+
+    #qr-reader video {
+        max-height: 55vh !important;
     }
 }
