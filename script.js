@@ -727,29 +727,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Code generator
-    const generateBtn = document.getElementById('generate-code-btn');
-    const copyBtn = document.getElementById('copy-code-btn');
-    const codeInput = document.getElementById('generated-code');
-
-    if (generateBtn && codeInput) {
-        generateBtn.addEventListener('click', function() {
-            const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-            codeInput.value = code;
-        });
-    }
-
-    if (copyBtn && codeInput) {
-        copyBtn.addEventListener('click', async function() {
-            if (!codeInput.value) return;
-            try {
-                await navigator.clipboard.writeText(codeInput.value);
-                showSuccess('Cod copiat în clipboard!');
-            } catch (_) {
-                showError('Nu am putut copia codul');
-            }
-        });
-    }
 
     // Load user data on dashboard
     if (window.location.pathname.includes('dashboard.html')) {
