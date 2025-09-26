@@ -75,7 +75,7 @@ async function register(username, password, referralCode) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ username, password, referralCode }),
+            body: JSON.stringify({ username, password}),
         });
 
         const data = await response.json();
