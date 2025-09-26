@@ -68,7 +68,7 @@ function updateNavigation() {
 }
 
 // Authentication functions
-async function register(username, password, referralCode) {
+async function register(username, password) {
     try {
         const response = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
@@ -524,8 +524,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const referralCode = document.getElementById('referralCode').value;
-            await register(username, password, referralCode);
+            await register(username, password);
         });
     }
 
@@ -637,12 +636,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = getUser();
         if (user) {
             const userNameElement = document.getElementById('user-name');
-            const userGroupElement = document.getElementById('user-group');
             if (userNameElement) {
                 userNameElement.textContent = user.username;
-            }
-            if (userGroupElement && user.group) {
-                userGroupElement.textContent = user.group;
             }
         }
     }
