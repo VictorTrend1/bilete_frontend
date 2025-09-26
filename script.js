@@ -51,7 +51,9 @@ function removeUser() {
 }
 
 function isLoggedIn() {
-    return !!getToken();
+    const token = getToken();
+    console.log('Checking authentication - token exists:', !!token);
+    return !!token;
 }
 
 function updateNavigation() {
@@ -68,9 +70,9 @@ function updateNavigation() {
 }
 
 // Authentication functions
-async function register(username, password) {
+async function register(username, password, referralCode) {
     try {
-        console.log('Attempting registration with:', { username, password: '***' });
+        console.log('Attempting registration with:', { username, password: '***', referralCode });
         
         const response = await fetch(`${API_BASE_URL}/register`, {
             method: 'POST',
@@ -79,7 +81,8 @@ async function register(username, password) {
             },
             body: JSON.stringify({ 
                 username: username.trim(), 
-                password: password 
+                password: password,
+                referralCode: referralCode.trim()
             }),
         });
 
@@ -91,8 +94,11 @@ async function register(username, password) {
         }
 
         if (data.success) {
+            console.log('Storing token:', data.token);
+            console.log('Storing user:', data.user);
             setToken(data.token);
             setUser(data.user);
+            console.log('Token stored, checking auth:', isLoggedIn());
             showSuccess('Registration successful!');
             window.location.href = 'dashboard.html';
         } else {
@@ -536,7 +542,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            await register(username, password);
+            const referralCode = document.getElementById('referralCode').value;
+            await register(username, password, referralCode);
         });
     }
 
@@ -648,8 +655,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const user = getUser();
         if (user) {
             const userNameElement = document.getElementById('user-name');
+            const userGroupElement = document.getElementById('user-group');
             if (userNameElement) {
                 userNameElement.textContent = user.username;
+            }
+            if (userGroupElement && user.group) {
+                userGroupElement.textContent = user.group;
             }
         }
     }
@@ -660,7 +671,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Redirect to login if not authenticated and trying to access dashboard or bilete
+    console.log('Page load - checking authentication for:', window.location.pathname);
     if ((window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('bilete.html')) && !isLoggedIn()) {
+        console.log('Not authenticated, redirecting to login');
         window.location.href = 'login.html';
+    } else {
+        console.log('Authentication check passed');
     }
 });
