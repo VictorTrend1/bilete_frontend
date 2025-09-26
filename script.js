@@ -489,11 +489,27 @@ async function startScanner() {
 
     if (!scannerContainer || !startBtn || !stopBtn) return;
 
-    scannerContainer.style.display = 'block';
-    startBtn.style.display = 'none';
-    stopBtn.style.display = 'inline-block';
-
     try {
+        // Require secure context for camera on mobile (HTTPS or localhost)
+        const isSecureContext = (location.protocol === 'https:') || (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+        if (!isSecureContext) {
+            showError('Camera necesită conexiune securizată (HTTPS). Accesează site-ul prin HTTPS.');
+            return;
+        }
+
+        // Preflight permission prompt for better iOS behavior
+        try {
+            await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        } catch (permErr) {
+            showError('Permisiunea camerei a fost refuzată. Verifică în Setări > Safari > Cameră (Permite).');
+            return;
+        }
+
+        // Show scanner UI only after permission granted
+        scannerContainer.style.display = 'block';
+        startBtn.style.display = 'none';
+        stopBtn.style.display = 'inline-block';
+
         // Optimize config for mobile devices
         const isMobile = window.innerWidth < 768;
         const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
@@ -584,7 +600,15 @@ async function startScanner() {
         scannerActive = true;
     } catch (err) {
         console.error('Scanner init failed', err);
-        showError('Nu s-a putut porni camera. Verifică permisiunile.');
+        const name = (err && err.name) ? err.name : '';
+        const msgMap = {
+            NotAllowedError: 'Acces la cameră refuzat. Permite accesul din setările browserului.',
+            NotFoundError: 'Nu s-a găsit nicio cameră disponibilă pe dispozitiv.',
+            NotReadableError: 'Camera este utilizată de o altă aplicație. Închide alte aplicații care folosesc camera.',
+            OverconstrainedError: 'Constrângerile camerei nu pot fi satisfăcute pe acest dispozitiv.',
+            SecurityError: 'Context nesecurizat. Deschide site-ul prin HTTPS.'
+        };
+        showError(msgMap[name] || 'Nu s-a putut porni camera. Verifică permisiunile și încearcă din nou.');
         stopScanner();
     }
 }
