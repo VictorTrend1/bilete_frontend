@@ -74,14 +74,29 @@ function isLoggedIn() {
 
 function updateNavigation() {
     const dashboardLink = document.getElementById('dashboard-link');
+    const bileteLink = document.getElementById('bilete-link');
+    const loginLink = document.getElementById('login-link');
+    const registerLink = document.getElementById('register-link');
     const logoutBtn = document.getElementById('logout-btn');
     
     if (isLoggedIn()) {
+        // Show authenticated navigation
         if (dashboardLink) dashboardLink.style.display = 'block';
+        if (bileteLink) bileteLink.style.display = 'block';
         if (logoutBtn) logoutBtn.style.display = 'block';
+        
+        // Hide login/register links
+        if (loginLink) loginLink.style.display = 'none';
+        if (registerLink) registerLink.style.display = 'none';
     } else {
+        // Show non-authenticated navigation
         if (dashboardLink) dashboardLink.style.display = 'none';
+        if (bileteLink) bileteLink.style.display = 'none';
         if (logoutBtn) logoutBtn.style.display = 'none';
+        
+        // Show login/register links
+        if (loginLink) loginLink.style.display = 'block';
+        if (registerLink) registerLink.style.display = 'block';
     }
 }
 
@@ -1005,6 +1020,9 @@ document.addEventListener('DOMContentLoaded', function() {
         loadTicketsTable();
     }
 
+    // Update navigation based on authentication status
+    updateNavigation();
+    
     // Redirect to login if not authenticated and trying to access dashboard or bilete
     console.log('Page load - checking authentication for:', window.location.pathname);
     if ((window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('bilete.html')) && !isLoggedIn()) {
