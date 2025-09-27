@@ -544,7 +544,24 @@ function downloadQR() {
 
 // Verification functions
 async function verifyTicket(qrData) {
+    const resultDiv = document.getElementById('verification-result');
+    
     try {
+        console.log('Verifying ticket with data:', qrData);
+        
+        // Show loading state
+        if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'verification-result loading';
+            resultDiv.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #667eea; margin-bottom: 1rem;"></i>
+                    <h4>Se verifică biletul...</h4>
+                    <p>Te rugăm să aștepți</p>
+                </div>
+            `;
+        }
+        
         const response = await fetch(`${API_BASE_URL}/verify-ticket`, {
             method: 'POST',
             headers: {
@@ -559,8 +576,10 @@ async function verifyTicket(qrData) {
             throw new Error(data.error || 'Verification failed');
         }
 
+        console.log('Ticket verification successful:', data);
         showVerificationResult(data.ticket, true, null, data);
     } catch (error) {
+        console.error('Ticket verification failed:', error);
         showVerificationResult(null, false, error.message);
     }
 }
@@ -766,20 +785,18 @@ async function startScanner() {
                 // Stop scanner immediately to prevent multiple scans
                 stopScanner();
                 
-                // Process the scanned data
-                setTimeout(() => {
-                    try {
-                        // Try to parse as JSON first
-                        const parsed = JSON.parse(decodedText);
-                        if (parsed.ticket_id) {
-                            verifyTicket(JSON.stringify(parsed));
-                        } else {
-                            verifyTicket(decodedText);
-                        }
-                    } catch (_) {
+                // Process the scanned data immediately
+                try {
+                    // Try to parse as JSON first
+                    const parsed = JSON.parse(decodedText);
+                    if (parsed.ticket_id) {
+                        verifyTicket(JSON.stringify(parsed));
+                    } else {
                         verifyTicket(decodedText);
                     }
-                }, 200);
+                } catch (_) {
+                    verifyTicket(decodedText);
+                }
             },
             (errMsg) => {
                 // Only log errors in development
@@ -834,17 +851,28 @@ async function stopScanner() {
     const startBtn = document.getElementById('start-scanner');
     const stopBtn = document.getElementById('stop-scanner');
 
-    if (scannerContainer) scannerContainer.style.display = 'none';
-    if (startBtn) startBtn.style.display = 'inline-block';
+    // Reset button states immediately
+    if (startBtn) {
+        startBtn.style.display = 'inline-block';
+        startBtn.disabled = false;
+        startBtn.innerHTML = '<i class="fas fa-camera"></i> Pornește Scanner';
+    }
     if (stopBtn) stopBtn.style.display = 'none';
+    if (scannerContainer) scannerContainer.style.display = 'none';
 
+    // Stop the scanner instance
     try {
         if (html5QrCodeInstance) {
             await html5QrCodeInstance.stop();
             await html5QrCodeInstance.clear();
+            html5QrCodeInstance = null;
         }
-    } catch (_) {}
+    } catch (error) {
+        console.log('Scanner stop error (non-critical):', error);
+    }
+    
     scannerActive = false;
+    console.log('Scanner stopped successfully');
 }
 
 // Event listeners

@@ -535,6 +535,38 @@ body {
     border: 1px solid #f5c6cb;
 }
 
+/* Verification result states */
+.verification-result {
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 8px;
+    display: none;
+}
+
+.verification-result.loading {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    color: #667eea;
+}
+
+.verification-result.success {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(25, 135, 84, 0.1));
+    border: 1px solid rgba(40, 167, 69, 0.3);
+    color: #28a745;
+}
+
+.verification-result.error {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(200, 35, 51, 0.1));
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    color: #dc3545;
+}
+
+.verification-result.warning {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 152, 0, 0.1));
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    color: #ffc107;
+}
+
 .scanner-buttons {
     margin: 1rem 0;
     text-align: center;
