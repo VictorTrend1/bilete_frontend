@@ -394,36 +394,47 @@ body {
     border-radius: 8px;
 }
 
-/* QR Code Container in Modal */
+/* QR Code Container in Modal - Fixed Layout */
 #qr-code-container {
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin: 1rem 0;
-    padding: 1rem;
-    background: #fff;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
+    padding: 0;
+    background: transparent;
+    border: none;
     position: relative;
-    overflow: hidden;
+    min-height: 300px;
+    width: 100%;
 }
 
 #qr-code-container img {
     max-width: 100%;
-    height: auto;
+    width: 300px;
+    height: 300px;
+    object-fit: contain;
     display: block;
-    margin: 0 auto;
-    border-radius: 4px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin: 0;
+    padding: 0;
+    border: 2px solid #000;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
 }
 
-/* Ensure no white bands or overlays */
+/* Remove any pseudo-elements that might cause white bands */
 #qr-code-container::before,
 #qr-code-container::after {
     display: none !important;
+    content: none !important;
 }
 
+/* Ensure no overlapping elements */
 #qr-code-container * {
-    position: relative;
-    z-index: 1;
+    position: static;
+    z-index: auto;
 }
 
 .ticket-details {
@@ -848,20 +859,32 @@ body {
     }
     
     #qr-code-container {
-        padding: 0.5rem;
-        margin: 0.5rem 0;
-        background: #fff !important;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-        overflow: hidden;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        margin: 0.5rem 0 !important;
+        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        position: relative !important;
+        min-height: 250px !important;
+        width: 100% !important;
     }
     
     #qr-code-container img {
-        width: 100%;
-        max-width: 300px;
-        height: auto;
-        display: block;
-        margin: 0 auto;
+        width: 250px !important;
+        height: 250px !important;
+        max-width: 100% !important;
+        object-fit: contain !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 2px solid #000 !important;
+        border-radius: 8px !important;
+        background: #fff !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+        image-rendering: -webkit-optimize-contrast !important;
+        image-rendering: crisp-edges !important;
     }
     
     /* Ensure no white bands on mobile */
@@ -869,6 +892,11 @@ body {
     #qr-code-container::after {
         content: none !important;
         display: none !important;
+    }
+    
+    #qr-code-container * {
+        position: static !important;
+        z-index: auto !important;
     }
     
     .nav-container {
