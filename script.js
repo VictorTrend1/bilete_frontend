@@ -1,6 +1,22 @@
 // API Configuration
 const API_BASE_URL = 'https://bilete-backend.onrender.com/api';
 
+// Health check function
+async function checkBackendHealth() {
+    try {
+        const response = await fetch(`${API_BASE_URL.replace('/api', '')}/health`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.ok;
+    } catch (error) {
+        console.error('Backend health check failed:', error);
+        return false;
+    }
+}
+
 // Utility functions
 function showError(message) {
     const errorDiv = document.getElementById('error-message');
@@ -386,17 +402,42 @@ async function deleteTicket(el) {
     
     try {
         const token = getToken();
+        if (!token) {
+            showError('Nu ești autentificat. Te rugăm să te conectezi din nou.');
+            return;
+        }
+
+        // Check if backend is healthy before making the request
+        const isHealthy = await checkBackendHealth();
+        if (!isHealthy) {
+            showError('Backend-ul nu este disponibil. Te rugăm să încerci din nou mai târziu.');
+            return;
+        }
+
         const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
             }
         });
         
-        const data = await response.json();
+        // Check if response is HTML (error page) instead of JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server-ul nu răspunde corect. Verifică că backend-ul rulează.');
+        }
+        
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            console.error('JSON parse error:', jsonError);
+            throw new Error('Server-ul a returnat un răspuns invalid. Verifică că backend-ul rulează corect.');
+        }
         
         if (!response.ok) {
-            throw new Error(data.error || 'Nu am putut șterge biletul');
+            throw new Error(data.error || `Eroare server: ${response.status}`);
         }
         
         showSuccess('Bilet șters cu succes!');
@@ -404,7 +445,15 @@ async function deleteTicket(el) {
         loadTicketsTable();
     } catch (error) {
         console.error('Error deleting ticket:', error);
-        showError(error.message);
+        
+        // More specific error messages
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            showError('Nu se poate conecta la server. Verifică că backend-ul rulează pe ' + API_BASE_URL);
+        } else if (error.message.includes('JSON')) {
+            showError('Server-ul nu răspunde corect. Verifică că backend-ul rulează și este accesibil.');
+        } else {
+            showError(error.message);
+        }
     }
 }
 
