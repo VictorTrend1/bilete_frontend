@@ -463,7 +463,35 @@ function showQRModal(ticket) {
     const ticketDetails = document.getElementById('ticket-details');
 
     if (qrContainer) {
-        qrContainer.innerHTML = `<img src="${ticket.qr_code}" alt="QR Code">`;
+        // Clear any existing content and ensure clean container
+        qrContainer.innerHTML = '';
+        qrContainer.style.background = '#fff';
+        qrContainer.style.padding = '1rem';
+        qrContainer.style.borderRadius = '8px';
+        qrContainer.style.border = '1px solid #e9ecef';
+        qrContainer.style.overflow = 'hidden';
+        
+        // Create and configure the QR code image
+        const qrImg = document.createElement('img');
+        qrImg.src = ticket.qr_code;
+        qrImg.alt = 'QR Code';
+        qrImg.style.maxWidth = '100%';
+        qrImg.style.height = 'auto';
+        qrImg.style.display = 'block';
+        qrImg.style.margin = '0 auto';
+        qrImg.style.borderRadius = '4px';
+        qrImg.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+        
+        // Add loading state
+        qrImg.onload = function() {
+            qrContainer.style.background = '#fff';
+        };
+        
+        qrImg.onerror = function() {
+            qrContainer.innerHTML = '<p style="color: #dc3545; text-align: center;">Eroare la încărcarea QR code-ului</p>';
+        };
+        
+        qrContainer.appendChild(qrImg);
     }
 
     if (ticketDetails) {
@@ -471,16 +499,20 @@ function showQRModal(ticket) {
         const groupInfo = user && user.group ? `<p><strong>Grup:</strong> ${user.group}</p>` : '';
         
         ticketDetails.innerHTML = `
-            <h4>Detalii bilet</h4>
-            <p><strong>Nume:</strong> ${ticket.nume}</p>
-            <p><strong>Telefon:</strong> ${ticket.telefon}</p>
-            <p><strong>Tip bilet:</strong> ${ticket.tip_bilet}</p>
-            ${groupInfo}
+            <div style="background: #f8f9fa; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                <h4 style="margin-bottom: 1rem; color: #333;">Detalii bilet</h4>
+                <p><strong>Nume:</strong> ${ticket.nume}</p>
+                <p><strong>Telefon:</strong> ${ticket.telefon}</p>
+                <p><strong>Tip bilet:</strong> ${ticket.tip_bilet}</p>
+                ${groupInfo}
+            </div>
         `;
     }
 
     if (modal) {
         modal.style.display = 'block';
+        // Ensure modal is on top
+        modal.style.zIndex = '2000';
     }
 }
 

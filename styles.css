@@ -354,6 +354,17 @@ body {
     width: 90%;
     max-width: 500px;
     position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-content h3 {
+    margin-bottom: 1.5rem;
+    text-align: center;
+    color: #333;
+    font-size: 1.5rem;
+    font-weight: 600;
 }
 
 .close {
@@ -381,6 +392,38 @@ body {
     height: auto;
     border: 1px solid #ddd;
     border-radius: 8px;
+}
+
+/* QR Code Container in Modal */
+#qr-code-container {
+    text-align: center;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    position: relative;
+    overflow: hidden;
+}
+
+#qr-code-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Ensure no white bands or overlays */
+#qr-code-container::before,
+#qr-code-container::after {
+    display: none !important;
+}
+
+#qr-code-container * {
+    position: relative;
+    z-index: 1;
 }
 
 .ticket-details {
@@ -676,6 +719,17 @@ body {
         width: 95%;
         margin: 10% auto;
         padding: 1.5rem;
+        max-height: 85vh;
+    }
+    
+    #qr-code-container {
+        padding: 0.75rem;
+        margin: 0.75rem 0;
+    }
+    
+    #qr-code-container img {
+        max-width: 100%;
+        height: auto;
     }
     
     .verification-card {
@@ -790,6 +844,31 @@ body {
         width: 98%;
         margin: 5% auto;
         padding: 1rem;
+        max-height: 90vh;
+    }
+    
+    #qr-code-container {
+        padding: 0.5rem;
+        margin: 0.5rem 0;
+        background: #fff !important;
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    
+    #qr-code-container img {
+        width: 100%;
+        max-width: 300px;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+    }
+    
+    /* Ensure no white bands on mobile */
+    #qr-code-container::before,
+    #qr-code-container::after {
+        content: none !important;
+        display: none !important;
     }
     
     .nav-container {
