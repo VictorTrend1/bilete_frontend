@@ -703,6 +703,14 @@ async function startScanner() {
         scannerContainer.style.display = 'block';
         startBtn.style.display = 'none';
         stopBtn.style.display = 'inline-block';
+        
+        // Scroll to scanner section for better visibility
+        setTimeout(() => {
+            scannerContainer.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+        }, 100);
 
         // Device detection
         const isMobile = window.innerWidth < 768;
