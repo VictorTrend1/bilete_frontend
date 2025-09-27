@@ -340,6 +340,9 @@ function displayTicketsTable(tickets) {
                 <button class="btn btn-primary" data-ticket='${JSON.stringify(ticket).replace(/'/g, "&apos;")}' onclick="sendTicketViaWhatsApp(this)">
                     <i class="fab fa-whatsapp"></i> Trimite bilet prin SMS
                 </button>
+                <button class="btn btn-danger" data-id="${ticket._id || ticket.id}" onclick="deleteTicket(this)">
+                    <i class="fas fa-trash"></i> Șterge
+                </button>
             </td>
         </tr>
     `).join('');
@@ -369,6 +372,39 @@ function sendTicketViaWhatsApp(el) {
     } catch (e) {
         console.error('Failed to send ticket via WhatsApp', e);
         showError('Eroare la trimiterea biletului prin WhatsApp');
+    }
+}
+
+async function deleteTicket(el) {
+    const ticketId = el.getAttribute('data-id');
+    if (!ticketId) return;
+    
+    // Confirmation dialog
+    if (!confirm('Ești sigur că vrei să ștergi acest bilet? Această acțiune nu poate fi anulată.')) {
+        return;
+    }
+    
+    try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Nu am putut șterge biletul');
+        }
+        
+        showSuccess('Bilet șters cu succes!');
+        // Reload the tickets table
+        loadTicketsTable();
+    } catch (error) {
+        console.error('Error deleting ticket:', error);
+        showError(error.message);
     }
 }
 
@@ -490,36 +526,79 @@ async function startScanner() {
     if (!scannerContainer || !startBtn || !stopBtn) return;
 
     try {
-        // Require secure context for camera on mobile (HTTPS or localhost)
-        const isSecureContext = (location.protocol === 'https:') || (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+        // Enhanced security context check
+        const isSecureContext = (location.protocol === 'https:') || 
+                               (location.hostname === 'localhost' || location.hostname === '127.0.0.1') ||
+                               (location.hostname === '0.0.0.0') ||
+                               (location.hostname.includes('127.0.0.1'));
+        
         if (!isSecureContext) {
-            showError('Camera necesită conexiune securizată (HTTPS). Accesează site-ul prin HTTPS.');
+            showError('🔒 Camera necesită conexiune securizată (HTTPS). Accesează site-ul prin HTTPS sau localhost.');
             return;
         }
 
-        // Preflight permission prompt for better iOS behavior
-        try {
-            await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-        } catch (permErr) {
-            showError('Permisiunea camerei a fost refuzată. Verifică în Setări > Safari > Cameră (Permite).');
+        // Check if getUserMedia is supported
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            showError('❌ Browser-ul nu suportă accesul la cameră. Încearcă cu Chrome, Firefox sau Safari.');
             return;
         }
 
-        // Show scanner UI only after permission granted
+        // Show loading state
+        const originalBtnText = startBtn.innerHTML;
+        startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se conectează...';
+        startBtn.disabled = true;
+
+        // Test camera access with multiple fallback strategies
+        let cameraConfig = null;
+        const cameraStrategies = [
+            // Strategy 1: Back camera with environment facing
+            { facingMode: { ideal: "environment" } },
+            // Strategy 2: Any camera with user facing
+            { facingMode: "user" },
+            // Strategy 3: No constraints - any available camera
+            true
+        ];
+
+        for (let i = 0; i < cameraStrategies.length; i++) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: cameraStrategies[i],
+                    audio: false 
+                });
+                
+                // Stop the test stream immediately
+                stream.getTracks().forEach(track => track.stop());
+                cameraConfig = cameraStrategies[i];
+                console.log(`Camera strategy ${i + 1} successful`);
+                break;
+            } catch (err) {
+                console.log(`Camera strategy ${i + 1} failed:`, err.name);
+                if (i === cameraStrategies.length - 1) {
+                    throw err; // Re-throw the last error
+                }
+            }
+        }
+
+        if (!cameraConfig) {
+            throw new Error('No camera access available');
+        }
+
+        // Show scanner UI
         scannerContainer.style.display = 'block';
         startBtn.style.display = 'none';
         stopBtn.style.display = 'inline-block';
 
-        // Optimize config for mobile devices
+        // Device detection
         const isMobile = window.innerWidth < 768;
         const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
         
+        // Improved scanner configuration
         const config = {
-            fps: isMobile ? 10 : (isTablet ? 20 : 15), // Lower FPS on mobile for better performance
+            fps: isMobile ? 8 : (isTablet ? 15 : 20), // Lower FPS on mobile for better performance
             qrbox: function(viewfinderWidth, viewfinderHeight) {
                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                // Larger scanning area on mobile for better detection
-                const boxSize = Math.floor(minEdge * (isMobile ? 0.8 : 0.7));
+                // Adaptive scanning area based on device
+                const boxSize = Math.floor(minEdge * (isMobile ? 0.85 : 0.75));
                 return { width: boxSize, height: boxSize };
             },
             aspectRatio: isMobile ? undefined : (isTablet ? 1.7778 : 1.3333),
@@ -527,41 +606,50 @@ async function startScanner() {
                 useBarCodeDetectorIfSupported: true,
                 useZxing: isMobile // Use ZXing on mobile for better performance
             },
-            // Mobile-specific optimizations
-            ...(isMobile && {
-                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
-                showTorchButtonIfSupported: true,
-                showZoomSliderIfSupported: true,
-                defaultZoomValueIfSupported: 2,
-                useTorch: false
-            })
+            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+            showTorchButtonIfSupported: true,
+            showZoomSliderIfSupported: true,
+            defaultZoomValueIfSupported: 2,
+            useBarCodeDetectorIfSupported: true,
+            rememberLastUsedCamera: true,
+            showPermissionRequestIfDenied: true
         };
 
+        // Initialize scanner
         html5QrCodeInstance = new Html5Qrcode("qr-reader");
+        
+        // Get available cameras
         const cameras = await Html5Qrcode.getCameras();
         let cameraId = cameras && cameras.length ? cameras[0].id : null;
         
-        // Better camera selection for mobile
-        if (isMobile) {
-            // Prefer back camera on mobile for better QR scanning
-            const back = cameras.find(c => /back|rear|environment/i.test(c.label));
-            if (back) {
-                cameraId = back.id;
+        // Smart camera selection
+        if (cameras && cameras.length > 1) {
+            // Prefer back camera for QR scanning
+            const backCamera = cameras.find(c => 
+                /back|rear|environment/i.test(c.label) || 
+                c.label.includes('back') || 
+                c.label.includes('rear')
+            );
+            
+            if (backCamera) {
+                cameraId = backCamera.id;
             } else {
-                // Try to find camera with higher resolution
-                const highRes = cameras.find(c => c.label.includes('4K') || c.label.includes('1080'));
-                if (highRes) cameraId = highRes.id;
+                // Fallback: find camera with higher resolution
+                const highResCamera = cameras.find(c => 
+                    c.label.includes('4K') || 
+                    c.label.includes('1080') || 
+                    c.label.includes('HD')
+                );
+                if (highResCamera) {
+                    cameraId = highResCamera.id;
+                }
             }
-        } else {
-            // For tablets/desktop, prefer back camera if available
-            const back = cameras.find(c => /back|rear|environment/i.test(c.label));
-            if (back) cameraId = back.id;
         }
 
-        // Mobile-specific start configuration
-        const startConfig = isMobile ? 
-            { deviceId: { exact: cameraId }, facingMode: "environment" } :
-            { deviceId: { exact: cameraId } };
+        // Start scanner with selected camera
+        const startConfig = cameraId ? 
+            { deviceId: { exact: cameraId } } : 
+            cameraConfig;
 
         await html5QrCodeInstance.start(
             startConfig,
@@ -569,46 +657,70 @@ async function startScanner() {
             (decodedText) => {
                 if (!decodedText) return;
                 
-                // Add small delay on mobile to prevent rapid scanning
-                if (isMobile) {
-                    setTimeout(() => {
-                        try {
-                            JSON.parse(decodedText);
-                            verifyTicket(decodedText);
-                        } catch (_) {
+                console.log("QR Code detected:", decodedText);
+                
+                // Stop scanner immediately to prevent multiple scans
+                stopScanner();
+                
+                // Process the scanned data
+                setTimeout(() => {
+                    try {
+                        // Try to parse as JSON first
+                        const parsed = JSON.parse(decodedText);
+                        if (parsed.ticket_id) {
+                            verifyTicket(JSON.stringify(parsed));
+                        } else {
                             verifyTicket(decodedText);
                         }
-                        stopScanner();
-                    }, 100);
-                } else {
-                    try {
-                        JSON.parse(decodedText);
-                        verifyTicket(decodedText);
                     } catch (_) {
                         verifyTicket(decodedText);
                     }
-                    stopScanner();
-                }
+                }, 200);
             },
             (errMsg) => {
-                // Reduce error logging on mobile to improve performance
-                if (!isMobile) {
+                // Only log errors in development
+                if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
                     console.log("QR scan error:", errMsg);
                 }
             }
         );
+        
         scannerActive = true;
+        showSuccess('📷 Scanner pornit cu succes! Ține camera stabilă pentru scanare.');
+        
     } catch (err) {
         console.error('Scanner init failed', err);
+        
+        // Reset button state
+        startBtn.innerHTML = originalBtnText;
+        startBtn.disabled = false;
+        
         const name = (err && err.name) ? err.name : '';
         const msgMap = {
-            NotAllowedError: 'Acces la cameră refuzat. Permite accesul din setările browserului.',
-            NotFoundError: 'Nu s-a găsit nicio cameră disponibilă pe dispozitiv.',
-            NotReadableError: 'Camera este utilizată de o altă aplicație. Închide alte aplicații care folosesc camera.',
-            OverconstrainedError: 'Constrângerile camerei nu pot fi satisfăcute pe acest dispozitiv.',
-            SecurityError: 'Context nesecurizat. Deschide site-ul prin HTTPS.'
+            NotAllowedError: '🚫 Acces la cameră refuzat. Apasă pe "Permite" când browser-ul îți cere permisiunea.',
+            NotFoundError: '📷 Nu s-a găsit cameră. Verifică dacă dispozitivul are cameră funcțională.',
+            NotReadableError: '📱 Camera este utilizată de o altă aplicație. Închide alte aplicații și încearcă din nou.',
+            OverconstrainedError: '⚙️ Constrângerile camerei nu pot fi satisfăcute. Încearcă cu un alt browser.',
+            SecurityError: '🔒 Context nesecurizat. Deschide site-ul prin HTTPS.',
+            AbortError: '⏱️ Operațiunea a fost întreruptă. Încearcă din nou.',
+            TypeError: '🌐 Browser-ul nu suportă această funcționalitate. Încearcă cu Chrome, Firefox sau Safari.'
         };
-        showError(msgMap[name] || 'Nu s-a putut porni camera. Verifică permisiunile și încearcă din nou.');
+        
+        const errorMessage = msgMap[name] || `❌ Nu s-a putut porni camera: ${err.message || 'Eroare necunoscută'}`;
+        showError(errorMessage);
+        
+        // Additional troubleshooting tips
+        setTimeout(() => {
+            showError(`
+                <strong>💡 Sfaturi pentru rezolvare:</strong><br>
+                • Verifică că ai permis accesul la cameră<br>
+                • Încearcă cu Chrome, Firefox sau Safari<br>
+                • Asigură-te că site-ul rulează pe HTTPS<br>
+                • Închide alte aplicații care folosesc camera<br>
+                • Folosește butonul "Introdu manual" ca alternativă
+            `);
+        }, 2000);
+        
         stopScanner();
     }
 }
