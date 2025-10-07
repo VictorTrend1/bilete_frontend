@@ -340,44 +340,19 @@ function downloadDataUrl(dataUrl, filename) {
 function showBALTicketModal(ticket, imageUrl, phoneNumber) {
     console.log('Showing BAL ticket modal with imageUrl:', imageUrl);
     
-    // Create modal HTML with direct sharing options
+    // Create simplified modal with only direct sharing
     const modalHTML = `
         <div id="bal-ticket-modal" class="modal" style="display: block;">
-            <div class="modal-content" style="max-width: 95%; max-height: 95%; overflow-y: auto;">
+            <div class="modal-content" style="max-width: 90%; max-height: 90%; overflow-y: auto;">
                 <span class="close" onclick="closeBALTicketModal()">&times;</span>
                 <h3>🎫 Biletul personalizat BAL</h3>
                 <div style="text-align: center; margin: 1rem 0;">
-                    <img src="${imageUrl}" alt="Bilet BAL" style="max-width: 100%; max-height: 500px; border: 3px solid #007bff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);" onload="console.log('BAL ticket image loaded successfully')" onerror="console.error('Failed to load BAL ticket image:', this.src)">
+                    <img src="${imageUrl}" alt="Bilet BAL" style="max-width: 100%; max-height: 400px; border: 3px solid #007bff; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);" onload="console.log('BAL ticket image loaded successfully')" onerror="console.error('Failed to load BAL ticket image:', this.src)">
                 </div>
                 
-                <div style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 1.5rem; border-radius: 12px; margin: 1rem 0;">
-                    <h4 style="margin: 0 0 1rem 0; color: white;">📱 Trimite direct prin WhatsApp</h4>
-                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                        <button class="btn btn-success" onclick="shareBALImageDirectly('${imageUrl}', '${phoneNumber}', '${ticket.nume}', '${ticket.tip_bilet}', '${new Date(ticket.created_at).toLocaleDateString('ro-RO')}')" style="background: #25D366; border: none; padding: 12px 24px; border-radius: 8px; color: white; font-weight: bold;">
-                            <i class="fab fa-whatsapp"></i> Trimite Imaginea Direct
-                        </button>
-                        <button class="btn btn-primary" onclick="openWhatsAppWithBAL('${phoneNumber}', '${ticket.nume}', '${ticket.tip_bilet}', '${new Date(ticket.created_at).toLocaleDateString('ro-RO')}')" style="background: #007bff; border: none; padding: 12px 24px; border-radius: 8px; color: white;">
-                            <i class="fab fa-whatsapp"></i> Deschide WhatsApp
-                        </button>
-                    </div>
-                </div>
-                
-                <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 1rem 0;">
-                    <h4>📋 Instrucțiuni pentru trimitere:</h4>
-                    <ol style="text-align: left; margin: 0.5rem 0; line-height: 1.6;">
-                        <li><strong>Opțiunea 1:</strong> Apasă "Trimite Imaginea Direct" pentru a deschide WhatsApp cu imaginea pregătită</li>
-                        <li><strong>Opțiunea 2:</strong> Apasă "Deschide WhatsApp" și atașează manual imaginea din galerie</li>
-                        <li>Imaginea a fost descărcată automat pe dispozitivul tău</li>
-                        <li>Selectează destinatarul și trimite mesajul</li>
-                    </ol>
-                </div>
-                
-                <div style="display: flex; gap: 1rem; justify-content: center; margin: 1rem 0; flex-wrap: wrap;">
-                    <button class="btn btn-secondary" onclick="downloadBALImage('${imageUrl}', '${ticket.nume}', '${ticket._id || ticket.id}')" style="background: #6c757d; border: none; padding: 10px 20px; border-radius: 6px; color: white;">
-                        <i class="fas fa-download"></i> Descarcă din nou
-                    </button>
-                    <button class="btn btn-info" onclick="copyImageToClipboard('${imageUrl}')" style="background: #17a2b8; border: none; padding: 10px 20px; border-radius: 6px; color: white;">
-                        <i class="fas fa-copy"></i> Copiază imaginea
+                <div style="text-align: center; margin: 2rem 0;">
+                    <button class="btn btn-success" onclick="shareBALImageDirectly('${imageUrl}', '${phoneNumber}', '${ticket.nume}', '${ticket.tip_bilet}', '${new Date(ticket.created_at).toLocaleDateString('ro-RO')}')" style="background: #25D366; border: none; padding: 15px 30px; border-radius: 8px; color: white; font-weight: bold; font-size: 1.1rem;">
+                        <i class="fab fa-whatsapp"></i> Trimite Imaginea Direct
                     </button>
                 </div>
             </div>
@@ -433,15 +408,14 @@ function downloadBALImage(imageUrl, nume, ticketId) {
 
 async function shareBALImageDirectly(imageUrl, phoneNumber, nume, tipBilet, dataCrearii) {
     try {
-        // Convert image to base64 for sharing
+        // Convert image to blob for sharing
         const response = await fetch(imageUrl);
         const blob = await response.blob();
-        const base64 = await blobToBase64(blob);
         
-        // Create WhatsApp message with image
+        // Create WhatsApp message
         const message = `Biletul tău personalizat BAL pentru eveniment:\n\nNume: ${nume}\nTip bilet: ${tipBilet}\nData creării: ${dataCrearii}\n\nBiletul personalizat este atașat mai jos.`;
         
-        // For mobile devices, try to use Web Share API
+        // Try to use Web Share API for direct image sharing
         if (navigator.share && navigator.canShare) {
             try {
                 await navigator.share({
@@ -453,20 +427,26 @@ async function shareBALImageDirectly(imageUrl, phoneNumber, nume, tipBilet, data
                 closeBALTicketModal();
                 return;
             } catch (shareError) {
-                console.log('Web Share API not supported, falling back to WhatsApp');
+                console.log('Web Share API failed, trying alternative method');
             }
         }
         
-        // Fallback: Open WhatsApp with text and instructions
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message + '\n\nImaginea biletului a fost descărcată pe dispozitivul tău. Te rugăm să o atașezi din galerie.')}`;
+        // Alternative: Download image and open WhatsApp
+        const link = document.createElement('a');
+        link.href = imageUrl;
+        link.download = `bilet-${nume}.png`;
+        link.click();
+        
+        // Open WhatsApp with message
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message + '\n\nImaginea biletului a fost descărcată. Te rugăm să o atașezi din galerie.')}`;
         window.open(whatsappUrl, '_blank');
         
-        showSuccess('WhatsApp deschis! Atașează imaginea din galerie.');
+        showSuccess('Biletul a fost descărcat și WhatsApp deschis! Atașează imaginea din galerie.');
         closeBALTicketModal();
         
     } catch (error) {
         console.error('Error sharing image:', error);
-        showError('Eroare la partajarea imaginii. Încearcă să descarci imaginea manual.');
+        showError('Eroare la partajarea imaginii.');
     }
 }
 
@@ -609,13 +589,11 @@ async function sendTicketViaWhatsApp(el) {
                     // Show modal with image preview and direct WhatsApp sharing
                     showBALTicketModal(ticket, imageUrl, phoneNumber);
                     
-                    // Auto-download the image
-                    link.click();
-                    
+                    // Don't auto-download, just show the modal
                     // Clean up after modal is closed
                     setTimeout(() => {
                         window.URL.revokeObjectURL(imageUrl);
-                    }, 10000);
+                    }, 30000); // Keep image available longer
                     
                     return;
                 } else {
