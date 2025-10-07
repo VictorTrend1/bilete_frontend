@@ -39,8 +39,22 @@
                             <span>Se verifică statusul bot-ului...</span>
                         </div>
                     </div>
+                    
+                    <!-- QR Code Display -->
+                    <div id="qr-code-display" style="display: none;">
+                        <h4><i class="fas fa-qrcode"></i> Scanează Codul QR</h4>
+                        <div class="qr-container">
+                            <div id="qr-code-image"></div>
+                            <p class="qr-instructions">
+                                <i class="fas fa-mobile-alt"></i> Deschide WhatsApp pe telefon și scanează acest cod QR pentru a conecta bot-ul
+                            </p>
+                        </div>
+                    </div>
                     <button class="btn btn-primary" onclick="refreshBotStatus()">
                         <i class="fas fa-sync-alt"></i> Actualizează Status
+                    </button>
+                    <button class="btn btn-secondary" onclick="debugBotStatus()">
+                        <i class="fas fa-bug"></i> Debug Status
                     </button>
                 </div>
             </div>
@@ -52,9 +66,6 @@
                     <div class="action-buttons">
                         <button class="btn btn-success" onclick="showSendTicketModal()">
                             <i class="fas fa-ticket-alt"></i> Trimite Bilet
-                        </button>
-                        <button class="btn btn-info" onclick="showBulkSendModal()">
-                            <i class="fas fa-layer-group"></i> Trimite în Masă
                         </button>
                         <button class="btn btn-warning" onclick="showScheduleModal()">
                             <i class="fas fa-clock"></i> Programează Trimitere
@@ -110,7 +121,8 @@
                 </div>
                 <div class="form-group">
                     <label for="phone-number">Număr de Telefon:</label>
-                    <input type="tel" id="phone-number" class="form-control" placeholder="+40712345678" required>
+                    <input type="tel" id="phone-number" class="form-control" placeholder="0712345678 sau +40712345678" required onblur="autoCompletePhoneNumber(this)" oninput="validatePhoneInput(this)">
+                    <small class="form-text">Introdu numărul de telefon (va fi formatat automat)</small>
                 </div>
                 <div class="form-group">
                     <label>
@@ -124,29 +136,6 @@
         </div>
     </div>
 
-    <!-- Bulk Send Modal -->
-    <div id="bulk-send-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeBulkSendModal()">&times;</span>
-            <h3>Trimite Bilete în Masă</h3>
-            <form id="bulk-send-form">
-                <div class="form-group">
-                    <label for="bulk-tickets">Selectează Biletele:</label>
-                    <select id="bulk-tickets" class="form-control" multiple required>
-                        <option value="">Alege biletele...</option>
-                    </select>
-                    <small class="form-text">Ține apăsat Ctrl pentru a selecta mai multe bilete</small>
-                </div>
-                <div class="form-group">
-                    <label for="bulk-phones">Numere de Telefon (unul pe linie):</label>
-                    <textarea id="bulk-phones" class="form-control" rows="5" placeholder="+40712345678&#10;+40723456789&#10;+40734567890" required></textarea>
-                </div>
-                <button type="submit" class="btn btn-info">
-                    <i class="fas fa-layer-group"></i> Trimite în Masă
-                </button>
-            </form>
-        </div>
-    </div>
 
     <!-- Schedule Modal -->
     <div id="schedule-modal" class="modal">
@@ -162,7 +151,8 @@
                 </div>
                 <div class="form-group">
                     <label for="schedule-phone">Număr de Telefon:</label>
-                    <input type="tel" id="schedule-phone" class="form-control" placeholder="+40712345678" required>
+                    <input type="tel" id="schedule-phone" class="form-control" placeholder="0712345678 sau +40712345678" required onblur="autoCompletePhoneNumber(this)" oninput="validatePhoneInput(this)">
+                    <small class="form-text">Introdu numărul de telefon (va fi formatat automat)</small>
                 </div>
                 <div class="form-group">
                     <label for="schedule-datetime">Data și Ora:</label>

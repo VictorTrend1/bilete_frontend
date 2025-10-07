@@ -492,11 +492,74 @@ async function copyImageToClipboard(imageUrl) {
 
 // Bot Functions
 
+// Phone number utilities
+function formatRomanianPhoneNumber(phoneNumber) {
+    // Remove all non-digit characters
+    let cleaned = phoneNumber.replace(/\D/g, '');
+    
+    // Handle different formats
+    if (cleaned.startsWith('0')) {
+        // Local format: 0712345678 -> +40712345678
+        return '+40' + cleaned.substring(1);
+    } else if (cleaned.startsWith('40')) {
+        // National format: 40712345678 -> +40712345678
+        return '+' + cleaned;
+    } else if (cleaned.startsWith('+40')) {
+        // Already formatted
+        return cleaned;
+    } else if (cleaned.length === 9) {
+        // Assume local format without 0
+        return '+40' + cleaned;
+    } else if (cleaned.length === 10 && cleaned.startsWith('0')) {
+        // Local format with 0
+        return '+40' + cleaned.substring(1);
+    }
+    
+    return phoneNumber; // Return original if can't format
+}
+
+function validateRomanianPhoneNumber(phoneNumber) {
+    const formatted = formatRomanianPhoneNumber(phoneNumber);
+    const phoneRegex = /^\+40[0-9]{9}$/;
+    return phoneRegex.test(formatted);
+}
+
+function autoCompletePhoneNumber(input) {
+    const value = input.value;
+    if (value && !value.startsWith('+')) {
+        const formatted = formatRomanianPhoneNumber(value);
+        if (formatted !== value) {
+            input.value = formatted;
+            // Trigger validation
+            validatePhoneInput(input);
+        }
+    }
+}
+
+function validatePhoneInput(input) {
+    const value = input.value;
+    const isValid = validateRomanianPhoneNumber(value);
+    
+    // Remove existing validation classes
+    input.classList.remove('is-valid', 'is-invalid');
+    
+    if (value) {
+        if (isValid) {
+            input.classList.add('is-valid');
+            input.setCustomValidity('');
+        } else {
+            input.classList.add('is-invalid');
+            input.setCustomValidity('Numărul de telefon nu este valid. Folosește formatul +40712345678');
+        }
+    }
+}
+
 // Check bot status
 async function checkBotStatus() {
     try {
         const response = await fetch(`${API_BASE_URL}/bot/status`);
         const data = await response.json();
+        console.log('Bot status response:', data);
         botStatus = data;
         return data;
     } catch (error) {
@@ -504,6 +567,60 @@ async function checkBotStatus() {
         return null;
     }
 }
+
+// Debug bot status
+async function debugBotStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/bot/debug`);
+        const data = await response.json();
+        console.log('Bot debug response:', data);
+        return data;
+    } catch (error) {
+        console.error('Error checking bot debug:', error);
+        return null;
+    }
+}
+
+// Get and display QR code
+async function getQRCode() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/bot/qr`);
+        const data = await response.json();
+        
+        if (response.ok) {
+            return data.qrCode;
+        } else {
+            console.log('QR code not available:', data.error);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error getting QR code:', error);
+        return null;
+    }
+}
+
+// Show QR code in the interface
+async function showQRCode() {
+    const qrDisplay = document.getElementById('qr-code-display');
+    const qrImage = document.getElementById('qr-code-image');
+    
+    if (!qrDisplay || !qrImage) return;
+    
+    try {
+        const qrCodeDataURL = await getQRCode();
+        
+        if (qrCodeDataURL) {
+            qrImage.innerHTML = `<img src="${qrCodeDataURL}" alt="WhatsApp QR Code" style="max-width: 300px; height: auto; border: 2px solid #000; border-radius: 8px;">`;
+            qrDisplay.style.display = 'block';
+        } else {
+            qrDisplay.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error showing QR code:', error);
+        qrDisplay.style.display = 'none';
+    }
+}
+
 
 // Send ticket via bot
 async function sendTicketViaBot(ticketId, phoneNumber, customImagePath = null) {
@@ -514,6 +631,8 @@ async function sendTicketViaBot(ticketId, phoneNumber, customImagePath = null) {
             return;
         }
 
+        console.log('Sending ticket via bot:', { ticketId, phoneNumber, customImagePath });
+
         const response = await fetch(`${API_BASE_URL}/bot/send-ticket`, {
             method: 'POST',
             headers: {
@@ -523,7 +642,9 @@ async function sendTicketViaBot(ticketId, phoneNumber, customImagePath = null) {
             body: JSON.stringify({ ticketId, phoneNumber, customImagePath }),
         });
 
+        console.log('Bot send response status:', response.status);
         const data = await response.json();
+        console.log('Bot send response data:', data);
 
         if (!response.ok) {
             throw new Error(data.error || 'Failed to send ticket via bot');
@@ -705,7 +826,7 @@ async function sendTicketViaBotEnhanced(el) {
         
         // Check bot status first
         const botStatus = await checkBotStatus();
-        if (!botStatus || !botStatus.initialized) {
+        if (!botStatus || !botStatus.ready) {
             showError('Bot-ul WhatsApp nu este inițializat. Te rugăm să scanezi codul QR mai întâi.');
             return;
         }
@@ -1536,9 +1657,9 @@ async function refreshBotStatus() {
     try {
         const status = await checkBotStatus();
         if (status) {
-            const statusClass = status.initialized ? 'status-ready' : 'status-not-ready';
-            const statusIcon = status.initialized ? 'fas fa-check-circle' : 'fas fa-times-circle';
-            const statusText = status.initialized ? 'Bot activ și gata' : 'Bot nu este inițializat';
+            const statusClass = status.ready ? 'status-ready' : 'status-not-ready';
+            const statusIcon = status.ready ? 'fas fa-check-circle' : 'fas fa-times-circle';
+            const statusText = status.ready ? 'Bot activ și gata' : 'Bot nu este inițializat';
             
             statusDiv.innerHTML = `
                 <div class="status-info ${statusClass}">
@@ -1553,6 +1674,16 @@ async function refreshBotStatus() {
                     ` : ''}
                 </div>
             `;
+            
+            // Show/hide QR code based on bot status
+            if (!status.ready) {
+                await showQRCode();
+            } else {
+                const qrDisplay = document.getElementById('qr-code-display');
+                if (qrDisplay) {
+                    qrDisplay.style.display = 'none';
+                }
+            }
         } else {
             statusDiv.innerHTML = `
                 <div class="status-info status-error">
@@ -1646,22 +1777,6 @@ function closeSendTicketModal() {
     }
 }
 
-// Show bulk send modal
-function showBulkSendModal() {
-    const modal = document.getElementById('bulk-send-modal');
-    if (modal) {
-        modal.style.display = 'block';
-    }
-}
-
-// Close bulk send modal
-function closeBulkSendModal() {
-    const modal = document.getElementById('bulk-send-modal');
-    if (modal) {
-        modal.style.display = 'none';
-        document.getElementById('bulk-send-form').reset();
-    }
-}
 
 // Show schedule modal
 function showScheduleModal() {
@@ -1751,33 +1866,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Bulk send form
-    const bulkSendForm = document.getElementById('bulk-send-form');
-    if (bulkSendForm) {
-        bulkSendForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const ticketIds = Array.from(document.getElementById('bulk-tickets').selectedOptions).map(option => option.value);
-            const phoneNumbers = document.getElementById('bulk-phones').value.split('\n').map(phone => phone.trim()).filter(phone => phone);
-            
-            if (ticketIds.length === 0 || phoneNumbers.length === 0) {
-                showError('Te rugăm să selectezi biletele și să introduci numerele de telefon.');
-                return;
-            }
-            
-            if (ticketIds.length !== phoneNumbers.length) {
-                showError('Numărul de bilete selectate trebuie să corespundă cu numărul de numere de telefon.');
-                return;
-            }
-            
-            try {
-                await sendBulkTicketsViaBot(ticketIds, phoneNumbers);
-                closeBulkSendModal();
-            } catch (error) {
-                showError(error.message);
-            }
-        });
-    }
     
     // Schedule form
     const scheduleForm = document.getElementById('schedule-form');
@@ -1808,7 +1896,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Modal close handlers
-    const modals = ['send-ticket-modal', 'bulk-send-modal', 'schedule-modal', 'scheduled-messages-modal'];
+    const modals = ['send-ticket-modal', 'schedule-modal', 'scheduled-messages-modal'];
     modals.forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (modal) {

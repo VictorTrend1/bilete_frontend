@@ -1263,6 +1263,77 @@ body {
     margin-top: 0.25rem;
 }
 
+/* Phone number validation styles */
+.form-control.is-valid {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-control.is-invalid {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+.form-control.is-valid:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.form-control.is-invalid:focus {
+    border-color: #dc3545;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+}
+
+/* QR Code Display */
+.qr-container {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin: 1rem 0;
+    border: 2px dashed #dee2e6;
+}
+
+.qr-container img {
+    max-width: 300px;
+    height: auto;
+    border: 2px solid #000;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.qr-instructions {
+    margin-top: 1rem;
+    color: #495057;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.qr-instructions i {
+    color: #25D366;
+    margin-right: 0.5rem;
+}
+
+#qr-code-display {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+}
+
+#qr-code-display h4 {
+    color: #856404;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#qr-code-display h4 i {
+    color: #25D366;
+}
+
 /* Bot responsive styles */
 @media (max-width: 768px) {
     .bot-container {
