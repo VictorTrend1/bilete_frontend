@@ -423,30 +423,37 @@ async function shareBALImageDirectly(imageUrl, phoneNumber, nume, tipBilet, data
                     text: message,
                     files: [new File([blob], `bilet-${nume}.png`, { type: 'image/png' })]
                 });
-                showSuccess('Biletul a fost partajat cu succes!');
+                showSuccess('Biletul a fost trimis cu succes!');
                 closeBALTicketModal();
                 return;
             } catch (shareError) {
-                console.log('Web Share API failed, trying alternative method');
+                console.log('Web Share API failed, trying WhatsApp direct');
             }
         }
         
-        // Alternative: Download image and open WhatsApp
+        // Direct WhatsApp sharing to specific phone number
+        // Download image first
         const link = document.createElement('a');
         link.href = imageUrl;
         link.download = `bilet-${nume}.png`;
         link.click();
         
-        // Open WhatsApp with message
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message + '\n\nImaginea biletului a fost descărcată. Te rugăm să o atașezi din galerie.')}`;
-        window.open(whatsappUrl, '_blank');
+        // Open WhatsApp directly to the phone number with message
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
         
-        showSuccess('Biletul a fost descărcat și WhatsApp deschis! Atașează imaginea din galerie.');
+        // Try to open in same window/tab for better mobile experience
+        if (window.navigator.userAgent.includes('Mobile')) {
+            window.location.href = whatsappUrl;
+        } else {
+            window.open(whatsappUrl, '_self');
+        }
+        
+        showSuccess('WhatsApp deschis pentru ' + phoneNumber + '! Atașează imaginea din galerie.');
         closeBALTicketModal();
         
     } catch (error) {
         console.error('Error sharing image:', error);
-        showError('Eroare la partajarea imaginii.');
+        showError('Eroare la trimiterea biletului.');
     }
 }
 
