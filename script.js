@@ -1,6 +1,9 @@
 // API Configuration
 const API_BASE_URL = 'https://bilete-backend.onrender.com/api';
 
+// Bot Configuration
+let botStatus = null;
+
 // Health check function
 async function checkBackendHealth() {
     try {
@@ -487,6 +490,261 @@ async function copyImageToClipboard(imageUrl) {
     }
 }
 
+// Bot Functions
+
+// Check bot status
+async function checkBotStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/bot/status`);
+        const data = await response.json();
+        botStatus = data;
+        return data;
+    } catch (error) {
+        console.error('Error checking bot status:', error);
+        return null;
+    }
+}
+
+// Send ticket via bot
+async function sendTicketViaBot(ticketId, phoneNumber, customImagePath = null) {
+    try {
+        const token = getToken();
+        if (!token) {
+            showError('Nu ești autentificat. Te rugăm să te conectezi din nou.');
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/bot/send-ticket`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ ticketId, phoneNumber, customImagePath }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to send ticket via bot');
+        }
+
+        showSuccess('Bilet trimis cu succes prin bot!');
+        return data;
+    } catch (error) {
+        console.error('Error sending ticket via bot:', error);
+        showError(error.message);
+    }
+}
+
+// Send bulk tickets via bot
+async function sendBulkTicketsViaBot(ticketIds, phoneNumbers, customImagePaths = null) {
+    try {
+        const token = getToken();
+        if (!token) {
+            showError('Nu ești autentificat. Te rugăm să te conectezi din nou.');
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/bot/send-bulk-tickets`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ ticketIds, phoneNumbers, customImagePaths }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to send bulk tickets via bot');
+        }
+
+        showSuccess(`Bulk tickets processing completed! Check results for details.`);
+        return data;
+    } catch (error) {
+        console.error('Error sending bulk tickets via bot:', error);
+        showError(error.message);
+    }
+}
+
+// Schedule ticket sending
+async function scheduleTicketSending(ticketId, phoneNumber, sendTime, customImagePath = null) {
+    try {
+        const token = getToken();
+        if (!token) {
+            showError('Nu ești autentificat. Te rugăm să te conectezi din nou.');
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/bot/schedule-ticket`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ ticketId, phoneNumber, sendTime, customImagePath }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to schedule ticket');
+        }
+
+        showSuccess(`Bilet programat cu succes pentru ${sendTime}!`);
+        return data;
+    } catch (error) {
+        console.error('Error scheduling ticket:', error);
+        showError(error.message);
+    }
+}
+
+// Get scheduled messages
+async function getScheduledMessages() {
+    try {
+        const token = getToken();
+        if (!token) {
+            return [];
+        }
+
+        const response = await fetch(`${API_BASE_URL}/bot/scheduled-messages`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to get scheduled messages');
+        }
+
+        return data.scheduledMessages;
+    } catch (error) {
+        console.error('Error getting scheduled messages:', error);
+        return [];
+    }
+}
+
+// Cancel scheduled message
+async function cancelScheduledMessage(jobId) {
+    try {
+        const token = getToken();
+        if (!token) {
+            showError('Nu ești autentificat. Te rugăm să te conectezi din nou.');
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/bot/scheduled-messages/${jobId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to cancel scheduled message');
+        }
+
+        showSuccess('Mesajul programat a fost anulat cu succes!');
+        return data;
+    } catch (error) {
+        console.error('Error cancelling scheduled message:', error);
+        showError(error.message);
+    }
+}
+
+// Send QR code via bot
+async function sendQRCodeViaBot(ticketId, phoneNumber) {
+    try {
+        const token = getToken();
+        if (!token) {
+            showError('Nu ești autentificat. Te rugăm să te conectezi din nou.');
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/bot/send-qr`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({ ticketId, phoneNumber }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to send QR code via bot');
+        }
+
+        showSuccess('Codul QR a fost trimis cu succes prin bot!');
+        return data;
+    } catch (error) {
+        console.error('Error sending QR code via bot:', error);
+        showError(error.message);
+    }
+}
+
+// Enhanced ticket sending with bot integration
+async function sendTicketViaBotEnhanced(el) {
+    try {
+        const ticket = JSON.parse(el.getAttribute('data-ticket').replace(/&apos;/g, "'"));
+        let phoneNumber = ticket.telefon.replace(/\D/g, ''); // Remove non-digits
+        
+        // Format Romanian phone number
+        if (phoneNumber.startsWith('0')) {
+            phoneNumber = '+40' + phoneNumber.substring(1);
+        } else if (!phoneNumber.startsWith('+40')) {
+            phoneNumber = '+40' + phoneNumber;
+        }
+        
+        // Check bot status first
+        const botStatus = await checkBotStatus();
+        if (!botStatus || !botStatus.initialized) {
+            showError('Bot-ul WhatsApp nu este inițializat. Te rugăm să scanezi codul QR mai întâi.');
+            return;
+        }
+        
+        // Check if it's a BAL ticket for custom image generation
+        if (ticket.tip_bilet === 'BAL') {
+            try {
+                // Generate custom BAL ticket
+                const customResponse = await fetch(`${API_BASE_URL}/tickets/${ticket._id || ticket.id}/custom-bal-public`);
+                
+                if (customResponse.ok) {
+                    const blob = await customResponse.blob();
+                    const imageUrl = window.URL.createObjectURL(blob);
+                    
+                    // Send via bot with custom image
+                    await sendTicketViaBot(ticket._id || ticket.id, phoneNumber, imageUrl);
+                    
+                    // Clean up
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(imageUrl);
+                    }, 30000);
+                    
+                    return;
+                }
+            } catch (error) {
+                console.error('Failed to generate custom BAL ticket:', error);
+                // Fall through to regular sending
+            }
+        }
+        
+        // Regular ticket sending via bot
+        await sendTicketViaBot(ticket._id || ticket.id, phoneNumber);
+        
+    } catch (error) {
+        console.error('Failed to send ticket via bot:', error);
+        showError('Eroare la trimiterea biletului prin bot: ' + error.message);
+    }
+}
+
 
 // Tickets table functions
 async function loadTicketsTable() {
@@ -548,6 +806,9 @@ function displayTicketsTable(tickets) {
                 </button>
                 <button class="btn btn-primary" data-ticket='${JSON.stringify(ticket).replace(/'/g, "&apos;")}' onclick="sendTicketViaWhatsApp(this)">
                     <i class="fab fa-whatsapp"></i> Trimite bilet prin SMS
+                </button>
+                <button class="btn btn-success" data-ticket='${JSON.stringify(ticket).replace(/'/g, "&apos;")}' onclick="sendTicketViaBotEnhanced(this)">
+                    <i class="fas fa-robot"></i> Trimite prin Bot
                 </button>
                 <button class="btn btn-danger" data-id="${ticket._id || ticket.id}" onclick="deleteTicket(this)">
                     <i class="fas fa-trash"></i> Șterge
@@ -1241,6 +1502,11 @@ document.addEventListener('DOMContentLoaded', function() {
         loadTicketsTable();
     }
 
+    // Load bot management page
+    if (window.location.pathname.includes('bot.html')) {
+        loadBotManagement();
+    }
+
     // Update navigation based on authentication status
     updateNavigation();
     
@@ -1252,4 +1518,305 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.log('Authentication check passed');
     }
+});
+
+// Bot Management Functions
+
+// Load bot management page
+async function loadBotManagement() {
+    await refreshBotStatus();
+    await loadTicketsForBot();
+}
+
+// Refresh bot status
+async function refreshBotStatus() {
+    const statusDiv = document.getElementById('bot-status-info');
+    if (!statusDiv) return;
+
+    try {
+        const status = await checkBotStatus();
+        if (status) {
+            const statusClass = status.initialized ? 'status-ready' : 'status-not-ready';
+            const statusIcon = status.initialized ? 'fas fa-check-circle' : 'fas fa-times-circle';
+            const statusText = status.initialized ? 'Bot activ și gata' : 'Bot nu este inițializat';
+            
+            statusDiv.innerHTML = `
+                <div class="status-info ${statusClass}">
+                    <i class="${statusIcon}"></i>
+                    <span>${statusText}</span>
+                </div>
+                <div class="status-details">
+                    <p><strong>Mesaje programate:</strong> ${status.status.scheduledMessages || 0}</p>
+                    ${status.status.clientInfo ? `
+                        <p><strong>Nume bot:</strong> ${status.status.clientInfo.name || 'N/A'}</p>
+                        <p><strong>Număr:</strong> ${status.status.clientInfo.number || 'N/A'}</p>
+                    ` : ''}
+                </div>
+            `;
+        } else {
+            statusDiv.innerHTML = `
+                <div class="status-info status-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Eroare la verificarea statusului bot-ului</span>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error refreshing bot status:', error);
+        statusDiv.innerHTML = `
+            <div class="status-info status-error">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>Eroare la verificarea statusului bot-ului</span>
+            </div>
+        `;
+    }
+}
+
+// Load tickets for bot management
+async function loadTicketsForBot() {
+    try {
+        const token = getToken();
+        if (!token) return;
+
+        const response = await fetch(`${API_BASE_URL}/tickets`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to load tickets');
+        }
+
+        // Populate ticket selects
+        populateTicketSelects(data.tickets);
+    } catch (error) {
+        console.error('Error loading tickets for bot:', error);
+    }
+}
+
+// Populate ticket select elements
+function populateTicketSelects(tickets) {
+    const selects = ['ticket-select', 'schedule-ticket'];
+    
+    selects.forEach(selectId => {
+        const select = document.getElementById(selectId);
+        if (!select) return;
+        
+        // Clear existing options except first
+        select.innerHTML = '<option value="">Alege un bilet...</option>';
+        
+        tickets.forEach(ticket => {
+            const option = document.createElement('option');
+            option.value = ticket._id || ticket.id;
+            option.textContent = `${ticket.nume} - ${ticket.tip_bilet} (${ticket.telefon})`;
+            select.appendChild(option);
+        });
+    });
+    
+    // Populate bulk tickets select
+    const bulkSelect = document.getElementById('bulk-tickets');
+    if (bulkSelect) {
+        bulkSelect.innerHTML = '<option value="">Alege biletele...</option>';
+        tickets.forEach(ticket => {
+            const option = document.createElement('option');
+            option.value = ticket._id || ticket.id;
+            option.textContent = `${ticket.nume} - ${ticket.tip_bilet} (${ticket.telefon})`;
+            bulkSelect.appendChild(option);
+        });
+    }
+}
+
+// Show send ticket modal
+function showSendTicketModal() {
+    const modal = document.getElementById('send-ticket-modal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+// Close send ticket modal
+function closeSendTicketModal() {
+    const modal = document.getElementById('send-ticket-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('send-ticket-form').reset();
+    }
+}
+
+// Show bulk send modal
+function showBulkSendModal() {
+    const modal = document.getElementById('bulk-send-modal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+// Close bulk send modal
+function closeBulkSendModal() {
+    const modal = document.getElementById('bulk-send-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('bulk-send-form').reset();
+    }
+}
+
+// Show schedule modal
+function showScheduleModal() {
+    const modal = document.getElementById('schedule-modal');
+    if (modal) {
+        modal.style.display = 'block';
+    }
+}
+
+// Close schedule modal
+function closeScheduleModal() {
+    const modal = document.getElementById('schedule-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.getElementById('schedule-form').reset();
+    }
+}
+
+// Show scheduled messages
+async function showScheduledMessages() {
+    const modal = document.getElementById('scheduled-messages-modal');
+    if (modal) {
+        modal.style.display = 'block';
+        
+        const listDiv = document.getElementById('scheduled-messages-list');
+        listDiv.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><span>Se încarcă mesajele programate...</span></div>';
+        
+        try {
+            const scheduledMessages = await getScheduledMessages();
+            
+            if (scheduledMessages.length === 0) {
+                listDiv.innerHTML = '<p>Nu există mesaje programate.</p>';
+            } else {
+                listDiv.innerHTML = scheduledMessages.map(msg => `
+                    <div class="scheduled-message-item">
+                        <div class="message-info">
+                            <h4>${msg.ticketData.nume}</h4>
+                            <p><strong>Telefon:</strong> ${msg.phoneNumber}</p>
+                            <p><strong>Programat pentru:</strong> ${msg.sendTime}</p>
+                            <p><strong>Status:</strong> ${msg.status}</p>
+                        </div>
+                        <div class="message-actions">
+                            <button class="btn btn-danger btn-sm" onclick="cancelScheduledMessage('${msg.jobId}')">
+                                <i class="fas fa-times"></i> Anulează
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (error) {
+            listDiv.innerHTML = '<p>Eroare la încărcarea mesajelor programate.</p>';
+        }
+    }
+}
+
+// Close scheduled messages modal
+function closeScheduledMessagesModal() {
+    const modal = document.getElementById('scheduled-messages-modal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Event listeners for bot management
+document.addEventListener('DOMContentLoaded', function() {
+    // Send ticket form
+    const sendTicketForm = document.getElementById('send-ticket-form');
+    if (sendTicketForm) {
+        sendTicketForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const ticketId = document.getElementById('ticket-select').value;
+            const phoneNumber = document.getElementById('phone-number').value;
+            const includeCustomImage = document.getElementById('include-custom-image').checked;
+            
+            if (!ticketId || !phoneNumber) {
+                showError('Te rugăm să completezi toate câmpurile.');
+                return;
+            }
+            
+            try {
+                await sendTicketViaBot(ticketId, phoneNumber, includeCustomImage ? 'auto' : null);
+                closeSendTicketModal();
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+    }
+    
+    // Bulk send form
+    const bulkSendForm = document.getElementById('bulk-send-form');
+    if (bulkSendForm) {
+        bulkSendForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const ticketIds = Array.from(document.getElementById('bulk-tickets').selectedOptions).map(option => option.value);
+            const phoneNumbers = document.getElementById('bulk-phones').value.split('\n').map(phone => phone.trim()).filter(phone => phone);
+            
+            if (ticketIds.length === 0 || phoneNumbers.length === 0) {
+                showError('Te rugăm să selectezi biletele și să introduci numerele de telefon.');
+                return;
+            }
+            
+            if (ticketIds.length !== phoneNumbers.length) {
+                showError('Numărul de bilete selectate trebuie să corespundă cu numărul de numere de telefon.');
+                return;
+            }
+            
+            try {
+                await sendBulkTicketsViaBot(ticketIds, phoneNumbers);
+                closeBulkSendModal();
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+    }
+    
+    // Schedule form
+    const scheduleForm = document.getElementById('schedule-form');
+    if (scheduleForm) {
+        scheduleForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const ticketId = document.getElementById('schedule-ticket').value;
+            const phoneNumber = document.getElementById('schedule-phone').value;
+            const sendTime = document.getElementById('schedule-datetime').value;
+            
+            if (!ticketId || !phoneNumber || !sendTime) {
+                showError('Te rugăm să completezi toate câmpurile.');
+                return;
+            }
+            
+            // Convert to proper format
+            const date = new Date(sendTime);
+            const formattedTime = date.toISOString().replace('T', ' ').substring(0, 19);
+            
+            try {
+                await scheduleTicketSending(ticketId, phoneNumber, formattedTime);
+                closeScheduleModal();
+            } catch (error) {
+                showError(error.message);
+            }
+        });
+    }
+    
+    // Modal close handlers
+    const modals = ['send-ticket-modal', 'bulk-send-modal', 'schedule-modal', 'scheduled-messages-modal'];
+    modals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            window.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+    });
 });
