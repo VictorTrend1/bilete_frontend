@@ -285,16 +285,44 @@ async function viewTicketFromButton(el) {
 async function downloadTicketQRFromButton(el) {
     const id = el.getAttribute('data-id');
     if (!id) return;
+    
     try {
         const token = getToken();
-        const response = await fetch(`${API_BASE_URL}/tickets/${id}/qr`, {
+        
+        // First, get ticket details to check if it's a BAL ticket
+        const ticketResponse = await fetch(`${API_BASE_URL}/tickets/${id}/qr`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        const data = await response.json();
-        if (!response.ok) {
-            throw new Error(data.error || 'Nu am putut descărca QR-ul');
+        const ticketData = await ticketResponse.json();
+        
+        if (!ticketResponse.ok) {
+            throw new Error(ticketData.error || 'Nu am putut descărca QR-ul');
         }
-        downloadDataUrl(data.qr_code, `bilet-${id}.png`);
+        
+        // Check if it's a BAL ticket for custom generation
+        if (ticketData.ticket && ticketData.ticket.tip_bilet === 'BAL') {
+            // Use custom BAL ticket generation
+            const customResponse = await fetch(`${API_BASE_URL}/tickets/${id}/custom-bal`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (!customResponse.ok) {
+                const errorData = await customResponse.json();
+                throw new Error(errorData.error || 'Nu am putut genera biletul personalizat');
+            }
+            
+            // Download the custom ticket as blob
+            const blob = await customResponse.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `bilet-${ticketData.ticket.nume}-${id}.png`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+        } else {
+            // Use regular QR code download for non-BAL tickets
+            downloadDataUrl(ticketData.qr_code, `bilet-${id}.png`);
+        }
     } catch (e) {
         showError(e.message);
     }
