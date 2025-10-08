@@ -584,7 +584,7 @@ async function debugMessagingStatus() {
 // Start WhatsApp automation
 async function startWhatsAppAutomation() {
     try {
-        showInfo('Pornesc automation WhatsApp...');
+        console.log('Starting WhatsApp automation...');
         
         const response = await fetch(`${API_BASE_URL}/bot/start-automation`, {
             method: 'POST',
@@ -605,18 +605,18 @@ async function startWhatsAppAutomation() {
             message += '5. ' + data.instructions.step5 + '\n\n';
             message += '⚠️ ' + data.instructions.note;
             
-            showSuccess(message);
+            alert(message);
             
             // Refresh status after a few seconds
             setTimeout(() => {
                 refreshMessagingStatus();
             }, 5000);
         } else {
-            showError('❌ ' + (data.error || 'Failed to start automation') + '\n\n' + data.fallback);
+            alert('❌ ' + (data.error || 'Failed to start automation') + '\n\n' + (data.fallback || 'System will continue using manual WhatsApp links'));
         }
     } catch (error) {
         console.error('Error starting automation:', error);
-        showError('Eroare la pornirea automation: ' + error.message);
+        alert('⚠️ Automation nu poate fi pornit pe acest server.\n\nMotiv: ' + error.message + '\n\n✅ Sistemul va continua să folosească link-uri WhatsApp manuale, care funcționează perfect!');
     }
 }
 
