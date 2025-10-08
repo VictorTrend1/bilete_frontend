@@ -101,7 +101,7 @@ await scheduleTicketSending(ticketId, phoneNumber, sendTime, email);
 ### **Status Servicii**
 ```css
 .service-item.available {
-    background: #d4edda;
+    background: #d4edda;Disponibil
     color: #155724;
 }
 
@@ -113,7 +113,7 @@ await scheduleTicketSending(ticketId, phoneNumber, sendTime, email);
 
 ### **Configurare Servicii**
 ```css
-#messaging-config-display {
+#messaging-config-display {Disponibil
     background: #f8f9fa;
     border: 1px solid #dee2e6;
     border-radius: 8px;

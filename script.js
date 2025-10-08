@@ -617,11 +617,8 @@ async function showMessagingConfig() {
                 <div class="config-services">
                     <h4>Servicii Disponibile:</h4>
                     <div class="service-status">
-                        <span class="service-item ${services.sms ? 'available' : 'unavailable'}">
-                            <i class="fas fa-sms"></i> SMS: ${services.sms ? 'Configurat' : 'Neconfigurat'}
-                        </span>
-                        <span class="service-item ${services.email ? 'available' : 'unavailable'}">
-                            <i class="fas fa-envelope"></i> Email: ${services.email ? 'Configurat' : 'Neconfigurat'}
+                        <span class="service-item ${services.automation ? 'available' : 'unavailable'}">
+                            <i class="fas fa-robot"></i> WhatsApp Automation: ${services.automation ? 'Activ' : 'Neactiv'}
                         </span>
                         <span class="service-item available">
                             <i class="fab fa-whatsapp"></i> WhatsApp Link: Disponibil
@@ -630,8 +627,9 @@ async function showMessagingConfig() {
                 </div>
                 <div class="config-details">
                     <h4>Detalii Configurare:</h4>
-                    <p><strong>Twilio SMS:</strong> ${configStatus.twilioConfigured ? 'Configurat' : 'Neconfigurat'}</p>
-                    <p><strong>Email:</strong> ${configStatus.emailConfigured ? 'Configurat' : 'Neconfigurat'}</p>
+                    <p><strong>WhatsApp:</strong> ${configStatus.whatsappConfigured ? 'Configurat' : 'Neconfigurat'}</p>
+                    <p><strong>Automation:</strong> ${configStatus.automationReady ? 'Activ' : 'Neactiv'}</p>
+                    <p><strong>Login Status:</strong> ${configStatus.loggedIn ? 'Conectat' : 'Neconectat'}</p>
                 </div>
             `;
             configDisplay.style.display = 'block';
@@ -673,20 +671,25 @@ async function sendTicketViaMessaging(ticketId, phoneNumber, email = null, custo
             throw new Error(data.error || 'Failed to send ticket via messaging service');
         }
 
-        // Show detailed results
-        if (data.result && data.result.results) {
-            const results = data.result.results;
-            const successfulMethods = results.filter(r => r.success).map(r => r.method);
-            const failedMethods = results.filter(r => !r.success).map(r => r.method);
+        // Show result based on method used
+        if (data.result && data.result.results && data.result.results.length > 0) {
+            const result = data.result.results[0];
             
-            let message = 'Bilet trimis cu succes prin: ' + successfulMethods.join(', ');
-            if (failedMethods.length > 0) {
-                message += '\nEșecuri: ' + failedMethods.join(', ');
+            if (result.method === 'WhatsApp_Automation') {
+                showSuccess('✅ Bilet trimis automat prin WhatsApp!');
+            } else if (result.method === 'WhatsApp_Web_Link' && result.link) {
+                const message = `Bilet pregătit pentru WhatsApp!\n\nClick pe link-ul de mai jos pentru a trimite biletul:\n\n${result.link}`;
+                showSuccess(message);
+                
+                // Optionally open the WhatsApp link automatically
+                if (confirm('Vrei să deschizi WhatsApp Web automat?')) {
+                    window.open(result.link, '_blank');
+                }
+            } else {
+                showSuccess('Bilet pregătit pentru trimitere prin WhatsApp!');
             }
-            
-            showSuccess(message);
         } else {
-            showSuccess('Bilet trimis cu succes prin serviciile de mesagerie!');
+            showSuccess('Bilet pregătit pentru trimitere prin WhatsApp!');
         }
         
         return data;
@@ -1895,10 +1898,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            const email = document.getElementById('email-address').value;
-            
             try {
-                await sendTicketViaMessaging(ticketId, phoneNumber, email, includeCustomImage ? 'auto' : null);
+                await sendTicketViaMessaging(ticketId, phoneNumber, null, includeCustomImage ? 'auto' : null);
                 closeSendTicketModal();
             } catch (error) {
                 showError(error.message);
@@ -1915,7 +1916,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const ticketId = document.getElementById('schedule-ticket').value;
             const phoneNumber = document.getElementById('schedule-phone').value;
-            const email = document.getElementById('schedule-email').value;
+            // Email removed - using WhatsApp only
             const sendTime = document.getElementById('schedule-datetime').value;
             
             if (!ticketId || !phoneNumber || !sendTime) {
@@ -1928,7 +1929,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formattedTime = date.toISOString().replace('T', ' ').substring(0, 19);
             
             try {
-                await scheduleTicketSending(ticketId, phoneNumber, formattedTime, email);
+                await scheduleTicketSending(ticketId, phoneNumber, formattedTime, null);
                 closeScheduleModal();
             } catch (error) {
                 showError(error.message);

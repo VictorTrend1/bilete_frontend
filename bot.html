@@ -26,7 +26,7 @@
         <div class="bot-container">
             <div class="bot-header">
                 <h2>📱 Servicii de Mesagerie</h2>
-                <p>Trimite bilete automat prin SMS, Email sau WhatsApp</p>
+                <p>Trimite bilete automat prin WhatsApp</p>
             </div>
 
             <!-- Messaging Service Status Section -->
@@ -79,22 +79,22 @@
                     <div class="instruction-step">
                         <div class="step-number">1</div>
                         <div class="step-content">
-                            <h4>Configurare Servicii</h4>
-                            <p>Sistemul încearcă automat SMS (Twilio), Email și WhatsApp Link. Configurează serviciile dorite în backend.</p>
+                            <h4>Configurare WhatsApp Automation</h4>
+                            <p>La prima rulare, sistemul va deschide WhatsApp Web și va cere să scanezi codul QR pentru a te conecta. După conectare, mesajele se vor trimite automat.</p>
                         </div>
                     </div>
                     <div class="instruction-step">
                         <div class="step-number">2</div>
                         <div class="step-content">
                             <h4>Trimitere Bilete</h4>
-                            <p>Folosește butoanele de mai sus pentru a trimite bilete prin toate metodele disponibile.</p>
+                            <p>După conectare, biletele se vor trimite automat prin WhatsApp. Dacă automation-ul nu este disponibil, vei primi link-uri WhatsApp pentru trimitere manuală.</p>
                         </div>
                     </div>
                     <div class="instruction-step">
                         <div class="step-number">3</div>
                         <div class="step-content">
                             <h4>Programare</h4>
-                            <p>Poți programa trimiterea biletelor pentru o anumită dată și oră prin toate serviciile.</p>
+                            <p>Poți programa trimiterea biletelor pentru o anumită dată și oră. Mesajele programate se vor trimite automat prin WhatsApp.</p>
                         </div>
                     </div>
                 </div>
@@ -118,11 +118,6 @@
                     <label for="phone-number">Număr de Telefon:</label>
                     <input type="tel" id="phone-number" class="form-control" placeholder="0712345678 sau +40712345678" required onblur="autoCompletePhoneNumber(this)" oninput="validatePhoneInput(this)">
                     <small class="form-text">Introdu numărul de telefon (va fi formatat automat)</small>
-                </div>
-                <div class="form-group">
-                    <label for="email-address">Email (opțional):</label>
-                    <input type="email" id="email-address" class="form-control" placeholder="user@example.com">
-                    <small class="form-text">Pentru trimitere prin email (opțional)</small>
                 </div>
                 <div class="form-group">
                     <label>
@@ -153,11 +148,6 @@
                     <label for="schedule-phone">Număr de Telefon:</label>
                     <input type="tel" id="schedule-phone" class="form-control" placeholder="0712345678 sau +40712345678" required onblur="autoCompletePhoneNumber(this)" oninput="validatePhoneInput(this)">
                     <small class="form-text">Introdu numărul de telefon (va fi formatat automat)</small>
-                </div>
-                <div class="form-group">
-                    <label for="schedule-email">Email (opțional):</label>
-                    <input type="email" id="schedule-email" class="form-control" placeholder="user@example.com">
-                    <small class="form-text">Pentru trimitere prin email (opțional)</small>
                 </div>
                 <div class="form-group">
                     <label for="schedule-datetime">Data și Ora:</label>
