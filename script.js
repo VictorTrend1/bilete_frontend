@@ -1,8 +1,8 @@
 // API Configuration
 const API_BASE_URL = 'https://bilete-backend.onrender.com/api';
 
-// Bot Configuration
-let botStatus = null;
+// Messaging Service Configuration
+let messagingStatus = null;
 
 // Health check function
 async function checkBackendHealth() {
@@ -554,76 +554,99 @@ function validatePhoneInput(input) {
     }
 }
 
-// Check bot status
-async function checkBotStatus() {
+// Check messaging service status
+async function checkMessagingStatus() {
     try {
         const response = await fetch(`${API_BASE_URL}/bot/status`);
         const data = await response.json();
-        console.log('Bot status response:', data);
-        botStatus = data;
+        console.log('Messaging service status response:', data);
+        messagingStatus = data;
         return data;
     } catch (error) {
-        console.error('Error checking bot status:', error);
+        console.error('Error checking messaging service status:', error);
         return null;
     }
 }
 
-// Debug bot status
-async function debugBotStatus() {
+// Debug messaging service status
+async function debugMessagingStatus() {
     try {
         const response = await fetch(`${API_BASE_URL}/bot/debug`);
         const data = await response.json();
-        console.log('Bot debug response:', data);
+        console.log('Messaging service debug response:', data);
         return data;
     } catch (error) {
-        console.error('Error checking bot debug:', error);
+        console.error('Error checking messaging service debug:', error);
         return null;
     }
 }
 
-// Get and display QR code
-async function getQRCode() {
+// Get messaging service configuration
+async function getMessagingConfig() {
     try {
-        const response = await fetch(`${API_BASE_URL}/bot/qr`);
+        const response = await fetch(`${API_BASE_URL}/bot/config`);
         const data = await response.json();
         
         if (response.ok) {
-            return data.qrCode;
+            return data;
         } else {
-            console.log('QR code not available:', data.error);
+            console.log('Messaging config not available:', data.error);
             return null;
         }
     } catch (error) {
-        console.error('Error getting QR code:', error);
+        console.error('Error getting messaging config:', error);
         return null;
     }
 }
 
-// Show QR code in the interface
-async function showQRCode() {
-    const qrDisplay = document.getElementById('qr-code-display');
-    const qrImage = document.getElementById('qr-code-image');
+// Show messaging service configuration in the interface
+async function showMessagingConfig() {
+    const configDisplay = document.getElementById('messaging-config-display');
+    const configInfo = document.getElementById('messaging-config-info');
     
-    if (!qrDisplay || !qrImage) return;
+    if (!configDisplay || !configInfo) return;
     
     try {
-        const qrCodeDataURL = await getQRCode();
+        const config = await getMessagingConfig();
         
-        if (qrCodeDataURL) {
-            qrImage.innerHTML = `<img src="${qrCodeDataURL}" alt="WhatsApp QR Code" style="max-width: 300px; height: auto; border: 2px solid #000; border-radius: 8px;">`;
-            qrDisplay.style.display = 'block';
+        if (config) {
+            const services = config.services || {};
+            const configStatus = config.config || {};
+            
+            configInfo.innerHTML = `
+                <div class="config-services">
+                    <h4>Servicii Disponibile:</h4>
+                    <div class="service-status">
+                        <span class="service-item ${services.sms ? 'available' : 'unavailable'}">
+                            <i class="fas fa-sms"></i> SMS: ${services.sms ? 'Configurat' : 'Neconfigurat'}
+                        </span>
+                        <span class="service-item ${services.email ? 'available' : 'unavailable'}">
+                            <i class="fas fa-envelope"></i> Email: ${services.email ? 'Configurat' : 'Neconfigurat'}
+                        </span>
+                        <span class="service-item available">
+                            <i class="fab fa-whatsapp"></i> WhatsApp Link: Disponibil
+                        </span>
+                    </div>
+                </div>
+                <div class="config-details">
+                    <h4>Detalii Configurare:</h4>
+                    <p><strong>Twilio SMS:</strong> ${configStatus.twilioConfigured ? 'Configurat' : 'Neconfigurat'}</p>
+                    <p><strong>Email:</strong> ${configStatus.emailConfigured ? 'Configurat' : 'Neconfigurat'}</p>
+                </div>
+            `;
+            configDisplay.style.display = 'block';
         } else {
-            qrDisplay.style.display = 'none';
+            configDisplay.style.display = 'none';
         }
     } catch (error) {
-        console.error('Error showing QR code:', error);
-        qrDisplay.style.display = 'none';
+        console.error('Error showing messaging config:', error);
+        configDisplay.style.display = 'none';
     }
 }
 
 
-// Send ticket via bot
-async function sendTicketViaBot(ticketId, phoneNumber, customImagePath = null) {
+// Send ticket via messaging service
+async function sendTicketViaMessaging(ticketId, phoneNumber, email = null, customImagePath = null) {
     try {
         const token = getToken();
         if (!token) {
@@ -631,7 +654,7 @@ async function sendTicketViaBot(ticketId, phoneNumber, customImagePath = null) {
             return;
         }
 
-        console.log('Sending ticket via bot:', { ticketId, phoneNumber, customImagePath });
+        console.log('Sending ticket via messaging service:', { ticketId, phoneNumber, email, customImagePath });
 
         const response = await fetch(`${API_BASE_URL}/bot/send-ticket`, {
             method: 'POST',
@@ -639,27 +662,42 @@ async function sendTicketViaBot(ticketId, phoneNumber, customImagePath = null) {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({ ticketId, phoneNumber, customImagePath }),
+            body: JSON.stringify({ ticketId, phoneNumber, email, customImagePath }),
         });
 
-        console.log('Bot send response status:', response.status);
+        console.log('Messaging service send response status:', response.status);
         const data = await response.json();
-        console.log('Bot send response data:', data);
+        console.log('Messaging service send response data:', data);
 
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to send ticket via bot');
+            throw new Error(data.error || 'Failed to send ticket via messaging service');
         }
 
-        showSuccess('Bilet trimis cu succes prin bot!');
+        // Show detailed results
+        if (data.result && data.result.results) {
+            const results = data.result.results;
+            const successfulMethods = results.filter(r => r.success).map(r => r.method);
+            const failedMethods = results.filter(r => !r.success).map(r => r.method);
+            
+            let message = 'Bilet trimis cu succes prin: ' + successfulMethods.join(', ');
+            if (failedMethods.length > 0) {
+                message += '\nEșecuri: ' + failedMethods.join(', ');
+            }
+            
+            showSuccess(message);
+        } else {
+            showSuccess('Bilet trimis cu succes prin serviciile de mesagerie!');
+        }
+        
         return data;
     } catch (error) {
-        console.error('Error sending ticket via bot:', error);
+        console.error('Error sending ticket via messaging service:', error);
         showError(error.message);
     }
 }
 
-// Send bulk tickets via bot
-async function sendBulkTicketsViaBot(ticketIds, phoneNumbers, customImagePaths = null) {
+// Send bulk tickets via messaging service
+async function sendBulkTicketsViaMessaging(ticketIds, phoneNumbers, emails = null, customImagePaths = null) {
     try {
         const token = getToken();
         if (!token) {
@@ -673,25 +711,25 @@ async function sendBulkTicketsViaBot(ticketIds, phoneNumbers, customImagePaths =
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({ ticketIds, phoneNumbers, customImagePaths }),
+            body: JSON.stringify({ ticketIds, phoneNumbers, emails, customImagePaths }),
         });
 
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.error || 'Failed to send bulk tickets via bot');
+            throw new Error(data.error || 'Failed to send bulk tickets via messaging service');
         }
 
-        showSuccess(`Bulk tickets processing completed! Check results for details.`);
+        showSuccess(`Bilete în masă procesate cu succes! Verifică rezultatele pentru detalii.`);
         return data;
     } catch (error) {
-        console.error('Error sending bulk tickets via bot:', error);
+        console.error('Error sending bulk tickets via messaging service:', error);
         showError(error.message);
     }
 }
 
 // Schedule ticket sending
-async function scheduleTicketSending(ticketId, phoneNumber, sendTime, customImagePath = null) {
+async function scheduleTicketSending(ticketId, phoneNumber, sendTime, email = null, customImagePath = null) {
     try {
         const token = getToken();
         if (!token) {
@@ -705,7 +743,7 @@ async function scheduleTicketSending(ticketId, phoneNumber, sendTime, customImag
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify({ ticketId, phoneNumber, sendTime, customImagePath }),
+            body: JSON.stringify({ ticketId, phoneNumber, sendTime, email, customImagePath }),
         });
 
         const data = await response.json();
@@ -1623,9 +1661,9 @@ document.addEventListener('DOMContentLoaded', function() {
         loadTicketsTable();
     }
 
-    // Load bot management page
+    // Load messaging service management page
     if (window.location.pathname.includes('bot.html')) {
-        loadBotManagement();
+        loadMessagingManagement();
     }
 
     // Update navigation based on authentication status
@@ -1643,23 +1681,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Bot Management Functions
 
-// Load bot management page
-async function loadBotManagement() {
-    await refreshBotStatus();
-    await loadTicketsForBot();
+// Load messaging service management page
+async function loadMessagingManagement() {
+    await refreshMessagingStatus();
+    await loadTicketsForMessaging();
 }
 
-// Refresh bot status
-async function refreshBotStatus() {
-    const statusDiv = document.getElementById('bot-status-info');
+// Refresh messaging service status
+async function refreshMessagingStatus() {
+    const statusDiv = document.getElementById('messaging-status-info');
     if (!statusDiv) return;
 
     try {
-        const status = await checkBotStatus();
+        const status = await checkMessagingStatus();
         if (status) {
             const statusClass = status.ready ? 'status-ready' : 'status-not-ready';
             const statusIcon = status.ready ? 'fas fa-check-circle' : 'fas fa-times-circle';
-            const statusText = status.ready ? 'Bot activ și gata' : 'Bot nu este inițializat';
+            const statusText = status.ready ? 'Servicii de mesagerie active' : 'Servicii de mesagerie nu sunt inițializate';
+            
+            const services = status.status?.services || {};
+            const config = status.status?.config || {};
             
             statusDiv.innerHTML = `
                 <div class="status-info ${statusClass}">
@@ -1667,44 +1708,41 @@ async function refreshBotStatus() {
                     <span>${statusText}</span>
                 </div>
                 <div class="status-details">
-                    <p><strong>Mesaje programate:</strong> ${status.status.scheduledMessages || 0}</p>
-                    ${status.status.clientInfo ? `
-                        <p><strong>Nume bot:</strong> ${status.status.clientInfo.name || 'N/A'}</p>
-                        <p><strong>Număr:</strong> ${status.status.clientInfo.number || 'N/A'}</p>
-                    ` : ''}
+                    <p><strong>Mesaje programate:</strong> ${status.status?.scheduledMessages || 0}</p>
+                    <div class="services-status">
+                        <p><strong>Servicii disponibile:</strong></p>
+                        <ul>
+                            <li><i class="fas fa-sms ${services.sms ? 'text-success' : 'text-muted'}"></i> SMS: ${services.sms ? 'Configurat' : 'Neconfigurat'}</li>
+                            <li><i class="fas fa-envelope ${services.email ? 'text-success' : 'text-muted'}"></i> Email: ${services.email ? 'Configurat' : 'Neconfigurat'}</li>
+                            <li><i class="fab fa-whatsapp text-success"></i> WhatsApp Link: Disponibil</li>
+                        </ul>
+                    </div>
                 </div>
             `;
             
-            // Show/hide QR code based on bot status
-            if (!status.ready) {
-                await showQRCode();
-            } else {
-                const qrDisplay = document.getElementById('qr-code-display');
-                if (qrDisplay) {
-                    qrDisplay.style.display = 'none';
-                }
-            }
+            // Show messaging configuration instead of QR code
+            await showMessagingConfig();
         } else {
             statusDiv.innerHTML = `
                 <div class="status-info status-error">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <span>Eroare la verificarea statusului bot-ului</span>
+                    <span>Eroare la verificarea statusului serviciilor de mesagerie</span>
                 </div>
             `;
         }
     } catch (error) {
-        console.error('Error refreshing bot status:', error);
+        console.error('Error refreshing messaging status:', error);
         statusDiv.innerHTML = `
             <div class="status-info status-error">
                 <i class="fas fa-exclamation-triangle"></i>
-                <span>Eroare la verificarea statusului bot-ului</span>
+                <span>Eroare la verificarea statusului serviciilor de mesagerie</span>
             </div>
         `;
     }
 }
 
-// Load tickets for bot management
-async function loadTicketsForBot() {
+// Load tickets for messaging service management
+async function loadTicketsForMessaging() {
     try {
         const token = getToken();
         if (!token) return;
@@ -1724,7 +1762,7 @@ async function loadTicketsForBot() {
         // Populate ticket selects
         populateTicketSelects(data.tickets);
     } catch (error) {
-        console.error('Error loading tickets for bot:', error);
+        console.error('Error loading tickets for messaging service:', error);
     }
 }
 
@@ -1857,8 +1895,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
+            const email = document.getElementById('email-address').value;
+            
             try {
-                await sendTicketViaBot(ticketId, phoneNumber, includeCustomImage ? 'auto' : null);
+                await sendTicketViaMessaging(ticketId, phoneNumber, email, includeCustomImage ? 'auto' : null);
                 closeSendTicketModal();
             } catch (error) {
                 showError(error.message);
@@ -1875,10 +1915,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const ticketId = document.getElementById('schedule-ticket').value;
             const phoneNumber = document.getElementById('schedule-phone').value;
+            const email = document.getElementById('schedule-email').value;
             const sendTime = document.getElementById('schedule-datetime').value;
             
             if (!ticketId || !phoneNumber || !sendTime) {
-                showError('Te rugăm să completezi toate câmpurile.');
+                showError('Te rugăm să completezi toate câmpurile obligatorii.');
                 return;
             }
             
@@ -1887,7 +1928,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formattedTime = date.toISOString().replace('T', ' ').substring(0, 19);
             
             try {
-                await scheduleTicketSending(ticketId, phoneNumber, formattedTime);
+                await scheduleTicketSending(ticketId, phoneNumber, formattedTime, email);
                 closeScheduleModal();
             } catch (error) {
                 showError(error.message);
