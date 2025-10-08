@@ -581,6 +581,45 @@ async function debugMessagingStatus() {
     }
 }
 
+// Start WhatsApp automation
+async function startWhatsAppAutomation() {
+    try {
+        showInfo('Pornesc automation WhatsApp...');
+        
+        const response = await fetch(`${API_BASE_URL}/bot/start-automation`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            let message = '✅ ' + data.message + '\n\n';
+            message += '📱 Instrucțiuni:\n';
+            message += '1. ' + data.instructions.step1 + '\n';
+            message += '2. ' + data.instructions.step2 + '\n';
+            message += '3. ' + data.instructions.step3 + '\n';
+            message += '4. ' + data.instructions.step4 + '\n';
+            message += '5. ' + data.instructions.step5 + '\n\n';
+            message += '⚠️ ' + data.instructions.note;
+            
+            showSuccess(message);
+            
+            // Refresh status after a few seconds
+            setTimeout(() => {
+                refreshMessagingStatus();
+            }, 5000);
+        } else {
+            showError('❌ ' + (data.error || 'Failed to start automation') + '\n\n' + data.fallback);
+        }
+    } catch (error) {
+        console.error('Error starting automation:', error);
+        showError('Eroare la pornirea automation: ' + error.message);
+    }
+}
+
 // Get messaging service configuration
 async function getMessagingConfig() {
     try {
@@ -844,7 +883,7 @@ async function sendQRCodeViaBot(ticketId, phoneNumber) {
             throw new Error(data.error || 'Failed to send QR code via bot');
         }
 
-        showSuccess('Codul QR a fost trimis cu succes prin bot!');
+        showSuccess('Codul QR a fost trimis cu succes prin WhatsApp!');
         return data;
     } catch (error) {
         console.error('Error sending QR code via bot:', error);
@@ -903,7 +942,7 @@ async function sendTicketViaBotEnhanced(el) {
         
     } catch (error) {
         console.error('Failed to send ticket via bot:', error);
-        showError('Eroare la trimiterea biletului prin bot: ' + error.message);
+        showError('Eroare la trimiterea biletului prin WhatsApp: ' + error.message);
     }
 }
 
@@ -966,11 +1005,8 @@ function displayTicketsTable(tickets) {
                 <button class="btn btn-secondary" data-id="${ticket._id || ticket.id}" onclick="downloadTicketQRFromButton(this)">
                     <i class="fas fa-download"></i> Descarcă cod QR
                 </button>
-                <button class="btn btn-primary" data-ticket='${JSON.stringify(ticket).replace(/'/g, "&apos;")}' onclick="sendTicketViaWhatsApp(this)">
-                    <i class="fab fa-whatsapp"></i> Trimite bilet prin SMS
-                </button>
                 <button class="btn btn-success" data-ticket='${JSON.stringify(ticket).replace(/'/g, "&apos;")}' onclick="sendTicketViaBotEnhanced(this)">
-                    <i class="fas fa-robot"></i> Trimite prin Bot
+                    <i class="fab fa-whatsapp"></i> Trimite prin WhatsApp
                 </button>
                 <button class="btn btn-danger" data-id="${ticket._id || ticket.id}" onclick="deleteTicket(this)">
                     <i class="fas fa-trash"></i> Șterge

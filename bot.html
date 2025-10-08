@@ -48,6 +48,9 @@
                     <button class="btn btn-primary" onclick="refreshMessagingStatus()">
                         <i class="fas fa-sync-alt"></i> Actualizează Status
                     </button>
+                    <button class="btn btn-success" onclick="startWhatsAppAutomation()">
+                        <i class="fas fa-robot"></i> Pornește Automation
+                    </button>
                     <button class="btn btn-secondary" onclick="debugMessagingStatus()">
                         <i class="fas fa-bug"></i> Debug Status
                     </button>
@@ -57,16 +60,10 @@
             <!-- Messaging Actions Section -->
             <div class="bot-actions-section">
                 <div class="action-card">
-                    <h3><i class="fas fa-paper-plane"></i> Acțiuni Mesagerie</h3>
+                    <h3><i class="fas fa-paper-plane"></i> Trimite Bilete</h3>
                     <div class="action-buttons">
-                        <button class="btn btn-success" onclick="showSendTicketModal()">
-                            <i class="fas fa-ticket-alt"></i> Trimite Bilet
-                        </button>
-                        <button class="btn btn-warning" onclick="showScheduleModal()">
-                            <i class="fas fa-clock"></i> Programează Trimitere
-                        </button>
-                        <button class="btn btn-secondary" onclick="showScheduledMessages()">
-                            <i class="fas fa-list"></i> Mesaje Programate
+                        <button class="btn btn-success btn-lg" onclick="showSendTicketModal()">
+                            <i class="fas fa-paper-plane"></i> Trimite Bilet prin WhatsApp
                         </button>
                     </div>
                 </div>
@@ -74,27 +71,27 @@
 
             <!-- Messaging Instructions -->
             <div class="bot-instructions">
-                <h3><i class="fas fa-info-circle"></i> Instrucțiuni Servicii</h3>
+                <h3><i class="fas fa-info-circle"></i> Cum Funcționează</h3>
                 <div class="instructions-content">
                     <div class="instruction-step">
                         <div class="step-number">1</div>
                         <div class="step-content">
-                            <h4>Configurare WhatsApp Automation</h4>
-                            <p>La prima rulare, sistemul va deschide WhatsApp Web și va cere să scanezi codul QR pentru a te conecta. După conectare, mesajele se vor trimite automat.</p>
+                            <h4>Selectează Biletul</h4>
+                            <p>Alege biletul pe care vrei să-l trimiți din lista ta de bilete.</p>
                         </div>
                     </div>
                     <div class="instruction-step">
                         <div class="step-number">2</div>
                         <div class="step-content">
-                            <h4>Trimitere Bilete</h4>
-                            <p>După conectare, biletele se vor trimite automat prin WhatsApp. Dacă automation-ul nu este disponibil, vei primi link-uri WhatsApp pentru trimitere manuală.</p>
+                            <h4>Introdu Numărul de Telefon</h4>
+                            <p>Adaugă numărul de telefon al destinatarului (format: 0712345678).</p>
                         </div>
                     </div>
                     <div class="instruction-step">
                         <div class="step-number">3</div>
                         <div class="step-content">
-                            <h4>Programare</h4>
-                            <p>Poți programa trimiterea biletelor pentru o anumită dată și oră. Mesajele programate se vor trimite automat prin WhatsApp.</p>
+                            <h4>Trimite prin WhatsApp</h4>
+                            <p>Sistemul generează un link WhatsApp - click pe link și mesajul se deschide gata de trimis!</p>
                         </div>
                     </div>
                 </div>
@@ -106,7 +103,7 @@
     <div id="send-ticket-modal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeSendTicketModal()">&times;</span>
-            <h3>Trimite Bilet prin Bot</h3>
+            <h3>Trimite Bilet prin WhatsApp</h3>
             <form id="send-ticket-form">
                 <div class="form-group">
                     <label for="ticket-select">Selectează Biletul:</label>
@@ -132,47 +129,6 @@
     </div>
 
 
-    <!-- Schedule Modal -->
-    <div id="schedule-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeScheduleModal()">&times;</span>
-            <h3>Programează Trimitere Bilet</h3>
-            <form id="schedule-form">
-                <div class="form-group">
-                    <label for="schedule-ticket">Selectează Biletul:</label>
-                    <select id="schedule-ticket" class="form-control" required>
-                        <option value="">Alege un bilet...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="schedule-phone">Număr de Telefon:</label>
-                    <input type="tel" id="schedule-phone" class="form-control" placeholder="0712345678 sau +40712345678" required onblur="autoCompletePhoneNumber(this)" oninput="validatePhoneInput(this)">
-                    <small class="form-text">Introdu numărul de telefon (va fi formatat automat)</small>
-                </div>
-                <div class="form-group">
-                    <label for="schedule-datetime">Data și Ora:</label>
-                    <input type="datetime-local" id="schedule-datetime" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-warning">
-                    <i class="fas fa-clock"></i> Programează
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Scheduled Messages Modal -->
-    <div id="scheduled-messages-modal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeScheduledMessagesModal()">&times;</span>
-            <h3>Mesaje Programate</h3>
-            <div id="scheduled-messages-list">
-                <div class="loading-spinner">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <span>Se încarcă mesajele programate...</span>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <footer class="footer">
         <p>&copy; 2025 Site Bilete. Toate drepturile rezervate.</p>
