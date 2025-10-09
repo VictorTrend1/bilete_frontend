@@ -43,7 +43,52 @@
     </nav>
 
     <main class="main-content container">
-        <div class="verification-container">
+        <!-- Ticket Preview Section (shown when ID is in URL) -->
+        <div id="ticket-preview-section" class="ticket-preview-section" style="display: none;">
+            <div class="ticket-preview-container">
+                <h2>Biletul Tău</h2>
+                <div class="ticket-info">
+                    <div class="ticket-details">
+                        <div class="ticket-field">
+                            <label>Nume:</label>
+                            <span id="ticket-name">-</span>
+                        </div>
+                        <div class="ticket-field">
+                            <label>Telefon:</label>
+                            <span id="ticket-phone">-</span>
+                        </div>
+                        <div class="ticket-field">
+                            <label>Tip Bilet:</label>
+                            <span id="ticket-type">-</span>
+                        </div>
+                        <div class="ticket-field">
+                            <label>Status:</label>
+                            <span id="ticket-status" class="status-badge">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ticket-preview-image">
+                    <img id="ticket-preview-img" src="" alt="Preview bilet" style="display: none;">
+                    <div id="ticket-loading" class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Se generează biletul...</p>
+                    </div>
+                </div>
+                
+                <div class="ticket-actions">
+                    <button id="download-ticket" class="btn btn-primary" style="display: none;">
+                        <i class="fas fa-download"></i> Descarcă Biletul
+                    </button>
+                    <button id="verify-ticket" class="btn btn-success" style="display: none;">
+                        <i class="fas fa-check"></i> Verifică Biletul
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verification Section (shown when no ID in URL) -->
+        <div id="verification-section" class="verification-container">
             <div class="verification-card">
                 <h2>Verificare Bilete</h2>
                 <p>Scanează QR code-ul biletului pentru a verifica validitatea</p>

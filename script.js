@@ -2257,3 +2257,122 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Ticket Preview Functionality for verificare.html
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we're on the verification page and if there's a ticket ID in the URL
+    if (window.location.pathname.includes('verificare.html')) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const ticketId = urlParams.get('id');
+        
+        if (ticketId) {
+            // Show ticket preview section and hide verification section
+            const ticketPreviewSection = document.getElementById('ticket-preview-section');
+            const verificationSection = document.getElementById('verification-section');
+            
+            if (ticketPreviewSection && verificationSection) {
+                ticketPreviewSection.style.display = 'block';
+                verificationSection.style.display = 'none';
+                
+                // Load ticket data and preview
+                loadTicketPreview(ticketId);
+            }
+        }
+    }
+});
+
+// Load ticket preview data and image
+async function loadTicketPreview(ticketId) {
+    try {
+        // Show loading state
+        const loadingDiv = document.getElementById('ticket-loading');
+        const previewImg = document.getElementById('ticket-preview-img');
+        
+        if (loadingDiv) loadingDiv.style.display = 'block';
+        if (previewImg) previewImg.style.display = 'none';
+        
+        // Fetch ticket data
+        const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/public`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to load ticket data');
+        }
+        
+        const ticket = data.ticket;
+        
+        // Update ticket details
+        document.getElementById('ticket-name').textContent = ticket.nume;
+        document.getElementById('ticket-phone').textContent = ticket.telefon;
+        document.getElementById('ticket-type').textContent = ticket.tip_bilet;
+        
+        // Update status
+        const statusElement = document.getElementById('ticket-status');
+        if (ticket.verified) {
+            statusElement.textContent = '✅ Verificat';
+            statusElement.className = 'status-badge status-verified';
+        } else {
+            statusElement.textContent = '⏳ Ne verificat';
+            statusElement.className = 'status-badge status-pending';
+        }
+        
+        // Generate and show ticket preview image
+        if (ticket.tip_bilet === 'BAL') {
+            // For BAL tickets, use the custom ticket generation
+            const ticketImageUrl = `${API_BASE_URL}/tickets/${ticketId}/custom-bal-public`;
+            if (previewImg) {
+                previewImg.src = ticketImageUrl;
+                previewImg.onload = function() {
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+                    previewImg.style.display = 'block';
+                };
+                previewImg.onerror = function() {
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+                    showError('Eroare la generarea preview-ului biletului');
+                };
+            }
+            
+            // Show download button
+            const downloadBtn = document.getElementById('download-ticket');
+            if (downloadBtn) {
+                downloadBtn.style.display = 'inline-block';
+                downloadBtn.onclick = () => {
+                    window.open(ticketImageUrl, '_blank');
+                };
+            }
+        } else {
+            // For non-BAL tickets, show a message
+            if (loadingDiv) {
+                loadingDiv.innerHTML = `
+                    <i class="fas fa-info-circle" style="font-size: 2rem; color: #17a2b8; margin-bottom: 1rem;"></i>
+                    <p>Preview personalizat disponibil doar pentru biletele BAL</p>
+                    <p>Tip bilet: ${ticket.tip_bilet}</p>
+                `;
+            }
+        }
+        
+        // Show verify button
+        const verifyBtn = document.getElementById('verify-ticket');
+        if (verifyBtn) {
+            verifyBtn.style.display = 'inline-block';
+            verifyBtn.onclick = () => {
+                // Redirect to verification without ID to use scanner
+                window.location.href = 'verificare.html';
+            };
+        }
+        
+    } catch (error) {
+        console.error('Error loading ticket preview:', error);
+        showError('Eroare la încărcarea biletului: ' + error.message);
+        
+        // Hide loading and show error
+        const loadingDiv = document.getElementById('ticket-loading');
+        if (loadingDiv) {
+            loadingDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 1rem;"></i>
+                <p>Eroare la încărcarea biletului</p>
+                <p>${error.message}</p>
+            `;
+        }
+    }
+}
