@@ -579,7 +579,7 @@ async function updateWhatsAppStatus() {
         if (status && status.success) {
             const statusClass = status.data?.isReady ? 'success' : 'warning';
             const statusIcon = status.data?.isReady ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
-            const statusText = 'WhatsApp Link-uri directe activ';
+            const statusText = 'WhatsApp activ';
             
             statusDiv.innerHTML = `
                 <div class="status-indicator ${statusClass}">
@@ -978,7 +978,30 @@ function updateTicketsSummary() {
     if (!summaryElement) return;
     
     const ticketCount = allTickets.length;
-    summaryElement.textContent = `Toate biletele create: ${ticketCount} bilete`;
+    
+    // Calculate total cost
+    let totalCost = 0;
+    allTickets.forEach(ticket => {
+        switch(ticket.tip_bilet) {
+            case 'BAL + AFTER':
+                totalCost += 160;
+                break;
+            case 'AFTER':
+                totalCost += 120;
+                break;
+            case 'BAL':
+                totalCost += 60;
+                break;
+            case 'AFTER VIP':
+                totalCost += 120; // Assuming same as AFTER
+                break;
+            case 'BAL + AFTER VIP':
+                totalCost += 160; // Assuming same as BAL + AFTER
+                break;
+        }
+    });
+    
+    summaryElement.textContent = `Toate biletele create: ${ticketCount} bilete, valoarea lor: ${totalCost} lei`;
 }
 
 // Update ticket sent status
