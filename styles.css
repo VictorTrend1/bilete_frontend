@@ -1600,3 +1600,21 @@ body {
     color: #495057;
     border-color: #adb5bd;
 }
+
+.filter-status {
+    margin-left: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-status::before {
+    content: "📊";
+    font-size: 1rem;
+}

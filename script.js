@@ -1003,8 +1003,13 @@ async function sendTicketViaBotEnhanced(el) {
         
         console.log('Sending ticket via Infobip API:', { ticketId: ticket._id, phoneNumber });
         
-        // Send via Infobip API only
+        // Show loading state
+        const originalText = el.innerHTML;
+        el.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se trimite...';
+        el.disabled = true;
+        
         try {
+            // Send via Infobip API only
             const result = await sendTicketViaMessaging(ticket._id || ticket.id, phoneNumber, null);
             
             if (result && result.success) {
@@ -1041,12 +1046,8 @@ async function sendTicketViaBotEnhanced(el) {
                                 }
                             }
                             
-                            // Refresh current filter
-                            const activeFilter = document.querySelector('.filter-btn.active');
-                            if (activeFilter) {
-                                const filterId = activeFilter.id.replace('filter-', '');
-                                filterTickets(filterId);
-                            }
+                            // Refresh current filter to update the display
+                            await filterTickets(currentFilter);
                             
                             // Reload cost calculation
                             await loadCostCalculation();
@@ -1063,26 +1064,41 @@ async function sendTicketViaBotEnhanced(el) {
         } catch (error) {
             console.error('Error sending ticket via Infobip API:', error);
             showError('Eroare la trimiterea biletului: ' + error.message);
+        } finally {
+            // Restore button state
+            el.innerHTML = originalText;
+            el.disabled = false;
         }
         
     } catch (error) {
         console.error('Failed to send ticket via bot:', error);
         showError('Eroare la trimiterea biletului prin WhatsApp: ' + error.message);
+        
+        // Restore button state on error
+        const originalText = el.innerHTML.replace('<i class="fas fa-spinner fa-spin"></i> Se trimite...', '<i class="fab fa-whatsapp"></i> Trimite prin WhatsApp');
+        el.innerHTML = originalText;
+        el.disabled = false;
     }
 }
 
 
 // Tickets table functions
 let allTickets = []; // Store all tickets for filtering
+let currentFilter = 'all'; // Track current filter
 
-async function loadTicketsTable() {
+async function loadTicketsTable(filter = 'all') {
     try {
         const token = getToken();
         if (!token) {
             return;
         }
 
-        const response = await fetch(`${API_BASE_URL}/tickets`, {
+        // Use filtered endpoint if not loading all tickets
+        const url = filter === 'all' 
+            ? `${API_BASE_URL}/tickets`
+            : `${API_BASE_URL}/tickets/filtered?filter=${filter}`;
+
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`,
             },
@@ -1094,8 +1110,27 @@ async function loadTicketsTable() {
             throw new Error(data.error || 'Failed to load tickets');
         }
 
-        allTickets = data.tickets; // Store all tickets
-        displayTicketsTable(allTickets);
+        const tickets = data.tickets;
+        
+        // Store all tickets for cost calculation (always load all for accurate cost)
+        if (filter === 'all') {
+            allTickets = tickets;
+        }
+        
+        displayTicketsTable(tickets);
+        
+        // Update active filter button
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.getElementById(`filter-${filter}`).classList.add('active');
+        
+        // Update filter status
+        updateFilterStatus(filter, tickets.length);
+        
+        currentFilter = filter;
+        
+        // Load cost calculation (always based on all tickets)
         await loadCostCalculation();
     } catch (error) {
         console.error('Error loading tickets:', error);
@@ -1103,29 +1138,30 @@ async function loadTicketsTable() {
 }
 
 // Filter tickets by sent status
-function filterTickets(filter) {
-    let filteredTickets = allTickets;
+async function filterTickets(filter) {
+    await loadTicketsTable(filter);
+}
+
+// Update filter status display
+function updateFilterStatus(filter, count) {
+    const filterStatus = document.getElementById('filter-status');
+    if (!filterStatus) return;
     
+    let statusText = '';
     switch(filter) {
         case 'not-sent':
-            filteredTickets = allTickets.filter(ticket => !ticket.sent);
+            statusText = `Afișez ${count} bilete netrimise`;
             break;
         case 'sent':
-            filteredTickets = allTickets.filter(ticket => ticket.sent);
+            statusText = `Afișez ${count} bilete trimise`;
             break;
         case 'all':
         default:
-            filteredTickets = allTickets;
+            statusText = `Afișez toate cele ${count} bilete`;
             break;
     }
     
-    displayTicketsTable(filteredTickets);
-    
-    // Update active filter button
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-    document.getElementById(`filter-${filter}`).classList.add('active');
+    filterStatus.textContent = statusText;
 }
 
 // Update ticket sent status
@@ -1172,11 +1208,7 @@ async function updateTicketSentStatus(checkbox) {
         }
         
         // Refresh current filter
-        const activeFilter = document.querySelector('.filter-btn.active');
-        if (activeFilter) {
-            const filterId = activeFilter.id.replace('filter-', '');
-            filterTickets(filterId);
-        }
+        await filterTickets(currentFilter);
         
         // Reload cost calculation
         await loadCostCalculation();
@@ -1196,6 +1228,7 @@ async function loadCostCalculation() {
             return;
         }
 
+        // Always load all tickets for cost calculation, regardless of current filter
         const response = await fetch(`${API_BASE_URL}/tickets/cost`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
