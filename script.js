@@ -556,145 +556,18 @@ function validatePhoneInput(input) {
 
 // Check messaging service status (Infobip API)
 async function checkMessagingStatus() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/infobip/status`, {
-            headers: {
-                'Authorization': `Bearer ${getToken()}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        const data = await response.json();
-        console.log('Infobip API status response:', data);
-        messagingStatus = data;
-        return data;
-    } catch (error) {
-        console.error('Error checking Infobip API status:', error);
-        return null;
-    }
+    // WhatsApp messaging is always available via direct links
+    return { success: true, data: { isReady: true, service: 'WhatsApp Direct Links' } };
 }
 
-// Test Infobip API connection
-async function testInfobipConnection() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/infobip/test-connection`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        const data = await response.json();
-        console.log('Infobip API connection test response:', data);
-        return data;
-    } catch (error) {
-        console.error('Error testing Infobip API connection:', error);
-        return null;
-    }
-}
 
-// Test Infobip API connection
+// Test WhatsApp functionality
 async function testInfobipAPI() {
-    try {
-        console.log('Testing Infobip API connection...');
-        
-        const response = await fetch(`${API_BASE_URL}/infobip/test-connection`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`,
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            let message = '✅ ' + data.message + '\n\n';
-            message += '🚀 Infobip WhatsApp API este activ!\n';
-            message += '💰 Balanță cont: ' + (data.data.balance || 'N/A') + ' ' + (data.data.currency || 'EUR') + '\n';
-            message += '🌐 Serviciu: ' + (data.data.service || 'Infobip WhatsApp API') + '\n\n';
-            message += '✅ Mesajele vor fi trimise automat prin API!';
-            
-            alert(message);
-            
-            // Refresh status after a few seconds
-            setTimeout(() => {
-                refreshMessagingStatus();
-            }, 2000);
-        } else {
-            alert('❌ ' + (data.error || 'Failed to connect to Infobip API') + '\n\n' + 'Sistemul va continua să folosească link-uri WhatsApp manuale.');
-        }
-    } catch (error) {
-        console.error('Error testing Infobip API:', error);
-        alert('⚠️ Infobip API nu poate fi testat.\n\nMotiv: ' + error.message + '\n\n✅ Sistemul va continua să folosească link-uri WhatsApp manuale, care funcționează perfect!');
-    }
+    alert('✅ WhatsApp este disponibil prin link-uri directe!\n\n🚀 Sistemul folosește link-uri WhatsApp pentru trimiterea biletelor.\n\n✅ Funcționează perfect fără API-uri externe!');
 }
 
-// Send message via Infobip API
-async function sendMessageViaInfobip(phoneNumber, message, imageUrl = null) {
-    try {
-        console.log('Sending message via Infobip API...');
-        
-        const response = await fetch(`${API_BASE_URL}/infobip/send-message`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                phoneNumber: phoneNumber,
-                message: message,
-                imageUrl: imageUrl
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            console.log('Message sent via Infobip:', data);
-            return { success: true, data: data.data };
-        } else {
-            console.error('Failed to send message via Infobip:', data.error);
-            return { success: false, error: data.error };
-        }
-    } catch (error) {
-        console.error('Error sending message via Infobip:', error);
-        return { success: false, error: error.message };
-    }
-}
 
-// Send ticket via Infobip API
-async function sendTicketViaInfobip(ticketData, phoneNumber) {
-    try {
-        console.log('Sending ticket via Infobip API...');
-        
-        const response = await fetch(`${API_BASE_URL}/infobip/send-ticket`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${getToken()}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                ticketData: ticketData,
-                phoneNumber: phoneNumber
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok && data.success) {
-            console.log('Ticket sent via Infobip:', data);
-            return { success: true, data: data.data };
-        } else {
-            console.error('Failed to send ticket via Infobip:', data.error);
-            return { success: false, error: data.error };
-        }
-    } catch (error) {
-        console.error('Error sending ticket via Infobip:', error);
-        return { success: false, error: error.message };
-    }
-}
 
-// Removed old getMessagingConfig function - now using Infobip API
 
 // Update WhatsApp status on bilete page
 async function updateWhatsAppStatus() {
@@ -745,7 +618,7 @@ async function sendTicketViaMessaging(ticketId, phoneNumber, email = null) {
             return;
         }
 
-        console.log('Sending ticket via Infobip API:', { ticketId, phoneNumber, email });
+        console.log('Opening WhatsApp for ticket:', { ticketId, phoneNumber });
 
         // Get ticket data
         const ticketResponse = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
@@ -761,14 +634,25 @@ async function sendTicketViaMessaging(ticketId, phoneNumber, email = null) {
 
         const ticketData = await ticketResponse.json();
         
-        // Send via Infobip API only
-        const infobipResult = await sendTicketViaInfobip(ticketData, phoneNumber);
+        // Create WhatsApp link with ticket details
+        const ticketLink = `https://www.site-bilete.shop/verificare.html?id=${ticketData._id}`;
+        const downloadLink = `https://www.site-bilete.shop/api/tickets/${ticketData._id}/qr.png`;
         
-        if (infobipResult.success) {
-            return { success: true, method: 'Infobip_API', data: infobipResult.data };
-        } else {
-            throw new Error(infobipResult.error || 'Infobip API failed');
-        }
+        const message = `*Bilet BAL*
+
+*Nume:* ${ticketData.nume}
+*Telefon:* ${ticketData.telefon}
+*Tip bilet:* ${ticketData.tip_bilet}
+
+*Vezi biletul complet:* ${ticketLink}
+*Descarcă biletul:* ${downloadLink}`;
+
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        
+        // Open WhatsApp
+        window.open(whatsappUrl, '_blank');
+        
+        return { success: true, method: 'WhatsApp_Direct', data: { url: whatsappUrl } };
         
     } catch (error) {
         console.error('Error sending ticket via messaging service:', error);
@@ -786,7 +670,7 @@ async function sendBulkTicketsViaMessaging(ticketIds, phoneNumbers, emails = nul
             return;
         }
 
-        console.log('Sending bulk tickets via Infobip API:', { ticketIds, phoneNumbers });
+        console.log('Opening WhatsApp for bulk tickets:', { ticketIds, phoneNumbers });
 
         // Get all ticket data
         const ticketPromises = ticketIds.map(async (ticketId) => {
@@ -804,47 +688,12 @@ async function sendBulkTicketsViaMessaging(ticketIds, phoneNumbers, emails = nul
 
         const tickets = await Promise.all(ticketPromises);
         
-        // Prepare messages for Infobip API
-        const messages = tickets.map((ticket, index) => ({
-            phoneNumber: phoneNumbers[index],
-            message: `*Bilet BAL*
-
-*Nume:* ${ticket.nume}
-*Telefon:* ${ticket.telefon}
-*Tip bilet:* ${ticket.tip_bilet}
-
-*Vezi biletul complet:* https://www.site-bilete.shop/verificare.html?id=${ticket._id}
-*Descarcă biletul:* https://www.site-bilete.shop/api/tickets/${ticket._id}/qr.png`
-        }));
-
-        // Try to send via Infobip API
-        try {
-            const response = await fetch(`${API_BASE_URL}/infobip/send-bulk`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: JSON.stringify({ messages }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok && data.success) {
-                showSuccess(`✅ Bilete trimise automat prin Infobip WhatsApp API!`);
-                return data;
-            } else {
-                throw new Error(data.error || 'Infobip API failed');
-            }
-        } catch (infobipError) {
-            console.log('Infobip API failed, falling back to manual WhatsApp links:', infobipError.message);
-            
-            // Fallback to manual WhatsApp links
-            const results = [];
-            for (let i = 0; i < tickets.length; i++) {
-                const ticket = tickets[i];
-                const phoneNumber = phoneNumbers[i];
-                const message = `*Bilet BAL*
+        // Create WhatsApp links for each ticket
+        const results = [];
+        for (let i = 0; i < tickets.length; i++) {
+            const ticket = tickets[i];
+            const phoneNumber = phoneNumbers[i];
+            const message = `*Bilet BAL*
 
 *Nume:* ${ticket.nume}
 *Telefon:* ${ticket.telefon}
@@ -853,13 +702,15 @@ async function sendBulkTicketsViaMessaging(ticketIds, phoneNumbers, emails = nul
 *Vezi biletul complet:* https://www.site-bilete.shop/verificare.html?id=${ticket._id}
 *Descarcă biletul:* https://www.site-bilete.shop/api/tickets/${ticket._id}/qr.png`;
 
-                const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-                results.push({ ticketId: ticket._id, phoneNumber, link: whatsappUrl, method: 'WhatsApp_Link' });
-            }
+            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+            results.push({ ticketId: ticket._id, phoneNumber, link: whatsappUrl, method: 'WhatsApp_Link' });
             
-            showSuccess(`Bilete pregătite pentru WhatsApp! ${results.length} link-uri generate.`);
-            return { success: true, results, method: 'WhatsApp_Links' };
+            // Open WhatsApp link
+            window.open(whatsappUrl, '_blank');
         }
+        
+        showSuccess(`✅ ${results.length} conversații WhatsApp deschise!`);
+        return { success: true, results, method: 'WhatsApp_Links' };
 
     } catch (error) {
         console.error('Error sending bulk tickets via messaging service:', error);
@@ -1082,9 +933,6 @@ async function markTicketAsSent(ticketId) {
             // Update tickets summary
             updateTicketsSummary();
             
-            // Reload cost calculation
-            await loadCostCalculation();
-            
             showSuccess('✅ Bilet marcat ca trimis!');
         }
     } catch (error) {
@@ -1121,9 +969,6 @@ async function loadTicketsTable() {
         
         // Update tickets summary
         updateTicketsSummary();
-        
-        // Load cost calculation
-        await loadCostCalculation();
     } catch (error) {
         console.error('Error loading tickets:', error);
     }
@@ -1199,67 +1044,12 @@ async function updateTicketSentStatus(checkbox) {
         
         // Update tickets summary
         updateTicketsSummary();
-        
-        // Reload cost calculation
-        await loadCostCalculation();
     } catch (error) {
         console.error('Error updating ticket sent status:', error);
         showError('Eroare la actualizarea statusului biletului: ' + error.message);
         // Revert checkbox state
         checkbox.checked = !checkbox.checked;
     }
-}
-
-// Load and display cost calculation
-async function loadCostCalculation() {
-    try {
-        const token = getToken();
-        if (!token) {
-            return;
-        }
-
-        // Always load all tickets for cost calculation, regardless of current filter
-        const response = await fetch(`${API_BASE_URL}/tickets/cost`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.error || 'Failed to load cost calculation');
-        }
-
-        displayCostCalculation(data);
-    } catch (error) {
-        console.error('Error loading cost calculation:', error);
-    }
-}
-
-// Display cost calculation
-function displayCostCalculation(costData) {
-    const costContainer = document.getElementById('cost-calculation');
-    if (!costContainer) return;
-
-    costContainer.innerHTML = `
-        <div class="cost-summary">
-            <h3>💰 Calculul Costurilor</h3>
-            <div class="cost-total">
-                <strong>Total: ${costData.totalCost} lei</strong>
-                <span class="ticket-count">(${costData.totalTickets} bilete)</span>
-            </div>
-            <div class="cost-breakdown">
-                ${costData.breakdown.map(item => `
-                    <div class="cost-item">
-                        <span class="ticket-type">${item.ticketType}</span>
-                        <span class="ticket-count">${item.count} x ${item.unitPrice} lei</span>
-                        <span class="ticket-total">= ${item.total} lei</span>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
 }
 
 function displayTicketsTable(tickets) {
@@ -2004,27 +1794,26 @@ async function refreshMessagingStatus() {
         if (status && status.success) {
             const statusClass = status.data?.isReady ? 'status-ready' : 'status-not-ready';
             const statusIcon = status.data?.isReady ? 'fas fa-check-circle' : 'fas fa-times-circle';
-            const statusText = status.data?.isReady ? 'Infobip WhatsApp API activ' : 'Infobip WhatsApp API neactiv';
+            const statusText = 'WhatsApp Link-uri directe activ';
             
             statusDiv.innerHTML = `
-                <div class="status-info ${statusClass}">
-                    <i class="${statusIcon}"></i>
+                <div class="status-info status-ready">
+                    <i class="fas fa-check-circle"></i>
                     <span>${statusText}</span>
                 </div>
                 <div class="status-details">
-                    <p><strong>Serviciu:</strong> ${status.data?.service || 'Infobip WhatsApp API'}</p>
-                    <p><strong>API Key:</strong> ${status.data?.apiKey || 'N/A'}</p>
-                    <p><strong>Base URL:</strong> ${status.data?.baseUrl || 'N/A'}</p>
+                    <p><strong>Serviciu:</strong> WhatsApp Direct Links</p>
+                    <p><strong>Metodă:</strong> Link-uri WhatsApp pre-completate</p>
                     <div class="services-status">
                         <p><strong>Servicii disponibile:</strong></p>
                         <ul>
-                            <li><i class="fab fa-whatsapp text-success"></i> WhatsApp API: ${status.data?.isReady ? 'Activ' : 'Neactiv'}</li>
-                            <li><i class="fas fa-link text-success"></i> WhatsApp Link: Disponibil (fallback)</li>
+                            <li><i class="fas fa-link text-success"></i> WhatsApp Link: Activ</li>
+                            <li><i class="fas fa-mobile-alt text-success"></i> WhatsApp Web: Disponibil</li>
                         </ul>
                     </div>
                     <div class="api-actions">
                         <button onclick="testInfobipAPI()" class="btn btn-primary btn-sm">
-                            <i class="fas fa-test-tube"></i> Testează API
+                            <i class="fas fa-test-tube"></i> Testează WhatsApp
                         </button>
                     </div>
                 </div>
@@ -2033,7 +1822,7 @@ async function refreshMessagingStatus() {
             statusDiv.innerHTML = `
                 <div class="status-info status-error">
                     <i class="fas fa-exclamation-triangle"></i>
-                    <span>Eroare la verificarea statusului Infobip API</span>
+                    <span>Eroare la verificarea statusului WhatsApp</span>
                 </div>
                 <div class="status-details">
                     <p><strong>Fallback disponibil:</strong> WhatsApp Link-uri manuale</p>
