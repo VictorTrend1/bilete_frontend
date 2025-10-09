@@ -695,66 +695,46 @@ async function sendTicketViaInfobip(ticketData, phoneNumber, imageUrl = null) {
     }
 }
 
-// Get messaging service configuration
-async function getMessagingConfig() {
+// Removed old getMessagingConfig function - now using Infobip API
+
+// Update WhatsApp status on bilete page
+async function updateWhatsAppStatus() {
+    const statusDiv = document.getElementById('whatsapp-status');
+    if (!statusDiv) return;
+
     try {
-        const response = await fetch(`${API_BASE_URL}/bot/config`);
-        const data = await response.json();
-        
-        if (response.ok) {
-            return data;
+        const status = await checkMessagingStatus();
+        if (status && status.success) {
+            const statusClass = status.data?.isReady ? 'success' : 'warning';
+            const statusIcon = status.data?.isReady ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+            const statusText = status.data?.isReady ? 'Infobip WhatsApp API activ' : 'Infobip WhatsApp API neactiv';
+            
+            statusDiv.innerHTML = `
+                <div class="status-indicator ${statusClass}">
+                    <i class="${statusIcon}"></i>
+                    <span>${statusText}</span>
+                </div>
+            `;
         } else {
-            console.log('Messaging config not available:', data.error);
-            return null;
+            statusDiv.innerHTML = `
+                <div class="status-indicator error">
+                    <i class="fas fa-times-circle"></i>
+                    <span>Infobip WhatsApp API neactiv - se folosesc link-uri manuale</span>
+                </div>
+            `;
         }
     } catch (error) {
-        console.error('Error getting messaging config:', error);
-        return null;
+        console.error('Error updating WhatsApp status:', error);
+        statusDiv.innerHTML = `
+            <div class="status-indicator error">
+                <i class="fas fa-times-circle"></i>
+                <span>Eroare la verificarea statusului WhatsApp API</span>
+            </div>
+        `;
     }
 }
 
-// Show messaging service configuration in the interface
-async function showMessagingConfig() {
-    const configDisplay = document.getElementById('messaging-config-display');
-    const configInfo = document.getElementById('messaging-config-info');
-    
-    if (!configDisplay || !configInfo) return;
-    
-    try {
-        const config = await getMessagingConfig();
-        
-        if (config) {
-            const services = config.services || {};
-            const configStatus = config.config || {};
-            
-            configInfo.innerHTML = `
-                <div class="config-services">
-                    <h4>Servicii Disponibile:</h4>
-                    <div class="service-status">
-                        <span class="service-item ${services.automation ? 'available' : 'unavailable'}">
-                            <i class="fas fa-robot"></i> WhatsApp Automation: ${services.automation ? 'Activ' : 'Neactiv'}
-                        </span>
-                        <span class="service-item available">
-                            <i class="fab fa-whatsapp"></i> WhatsApp Link: Disponibil
-                        </span>
-                    </div>
-                </div>
-                <div class="config-details">
-                    <h4>Detalii Configurare:</h4>
-                    <p><strong>WhatsApp:</strong> ${configStatus.whatsappConfigured ? 'Configurat' : 'Neconfigurat'}</p>
-                    <p><strong>Automation:</strong> ${configStatus.automationReady ? 'Activ' : 'Neactiv'}</p>
-                    <p><strong>Login Status:</strong> ${configStatus.loggedIn ? 'Conectat' : 'Neconectat'}</p>
-                </div>
-            `;
-            configDisplay.style.display = 'block';
-        } else {
-            configDisplay.style.display = 'none';
-        }
-    } catch (error) {
-        console.error('Error showing messaging config:', error);
-        configDisplay.style.display = 'none';
-    }
-}
+// Removed old showMessagingConfig function - now using Infobip API status display
 
 
 // Send ticket via messaging service (Infobip API)
@@ -768,7 +748,7 @@ async function sendTicketViaMessaging(ticketId, phoneNumber, email = null, custo
 
         console.log('Sending ticket via Infobip API:', { ticketId, phoneNumber, email, customImagePath });
 
-        // First, try to get ticket data
+        // Get ticket data
         const ticketResponse = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -847,6 +827,9 @@ async function sendBulkTicketsViaMessaging(ticketIds, phoneNumbers, emails = nul
                     'Content-Type': 'application/json'
                 }
             });
+            if (!response.ok) {
+                throw new Error(`Failed to fetch ticket ${ticketId}`);
+            }
             return response.json();
         });
 
@@ -1043,7 +1026,7 @@ async function sendQRCodeViaBot(ticketId, phoneNumber) {
     }
 }
 
-// Enhanced ticket sending with bot integration
+// Enhanced ticket sending with Infobip API
 async function sendTicketViaBotEnhanced(el) {
     try {
         const ticket = JSON.parse(el.getAttribute('data-ticket').replace(/&apos;/g, "'"));
@@ -1056,14 +1039,10 @@ async function sendTicketViaBotEnhanced(el) {
             phoneNumber = '+40' + phoneNumber;
         }
         
-        // Check bot status first
-        const botStatus = await checkBotStatus();
-        if (!botStatus || !botStatus.ready) {
-            showError('Bot-ul WhatsApp nu este inițializat. Te rugăm să scanezi codul QR mai întâi.');
-            return;
-        }
+        console.log('Sending ticket via Infobip API:', { ticketId: ticket._id, phoneNumber });
         
         // Check if it's a BAL ticket for custom image generation
+        let imageUrl = null;
         if (ticket.tip_bilet === 'BAL') {
             try {
                 // Generate custom BAL ticket
@@ -1071,26 +1050,39 @@ async function sendTicketViaBotEnhanced(el) {
                 
                 if (customResponse.ok) {
                     const blob = await customResponse.blob();
-                    const imageUrl = window.URL.createObjectURL(blob);
-                    
-                    // Send via bot with custom image
-                    await sendTicketViaBot(ticket._id || ticket.id, phoneNumber, imageUrl);
-                    
-                    // Clean up
-                    setTimeout(() => {
-                        window.URL.revokeObjectURL(imageUrl);
-                    }, 30000);
-                    
-                    return;
+                    imageUrl = window.URL.createObjectURL(blob);
                 }
             } catch (error) {
                 console.error('Failed to generate custom BAL ticket:', error);
-                // Fall through to regular sending
+                // Continue without image
             }
         }
         
-        // Regular ticket sending via bot
-        await sendTicketViaBot(ticket._id || ticket.id, phoneNumber);
+        // Send via Infobip API with fallback
+        try {
+            const result = await sendTicketViaMessaging(ticket._id || ticket.id, phoneNumber, null, imageUrl);
+            
+            if (result && result.success) {
+                if (result.method === 'Infobip_API') {
+                    showSuccess('✅ Bilet trimis automat prin Infobip WhatsApp API!');
+                } else if (result.method === 'WhatsApp_Link' && result.link) {
+                    showSuccess('Bilet pregătit pentru WhatsApp! Click pe link pentru a trimite.');
+                    if (confirm('Vrei să deschizi WhatsApp Web automat?')) {
+                        window.open(result.link, '_blank');
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error sending ticket via Infobip API:', error);
+            showError('Eroare la trimiterea biletului: ' + error.message);
+        } finally {
+            // Clean up image URL if created
+            if (imageUrl) {
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(imageUrl);
+                }, 30000);
+            }
+        }
         
     } catch (error) {
         console.error('Failed to send ticket via bot:', error);
@@ -1182,7 +1174,10 @@ async function sendTicketViaWhatsApp(el) {
             phoneNumber = '+40' + phoneNumber;
         }
         
+        console.log('Sending ticket via Infobip API:', { ticketId: ticket._id, phoneNumber });
+        
         // Check if it's a BAL ticket for custom image generation
+        let imageUrl = null;
         if (ticket.tip_bilet === 'BAL') {
             try {
                 console.log('Generating custom BAL ticket for:', ticket);
@@ -1196,42 +1191,44 @@ async function sendTicketViaWhatsApp(el) {
                     const blob = await customResponse.blob();
                     console.log('BAL ticket blob size:', blob.size, 'type:', blob.type);
                     
-                    const imageUrl = window.URL.createObjectURL(blob);
+                    imageUrl = window.URL.createObjectURL(blob);
                     console.log('Created image URL:', imageUrl);
-                    
-                    // Create a temporary link to download the image
-                    const link = document.createElement('a');
-                    link.href = imageUrl;
-                    link.download = `bilet-${ticket.nume}-${ticket._id || ticket.id}.png`;
-                    
-                    // Show modal with image preview and direct WhatsApp sharing
-                    showBALTicketModal(ticket, imageUrl, phoneNumber);
-                    
-                    // Don't auto-download, just show the modal
-                    // Clean up after modal is closed
-                    setTimeout(() => {
-                        window.URL.revokeObjectURL(imageUrl);
-                    }, 30000); // Keep image available longer
-                    
-                    return;
                 } else {
                     const errorText = await customResponse.text();
                     console.error('Custom BAL ticket generation failed:', customResponse.status, errorText);
                 }
             } catch (error) {
                 console.error('Failed to generate custom BAL ticket:', error);
-                // Fall through to regular text message
+                // Continue without image
             }
         }
         
-        // Fallback to regular text message for non-BAL tickets or if custom generation fails
-        const message = `Biletul tău pentru eveniment:\n\nNume: ${ticket.nume}\nTip bilet: ${ticket.tip_bilet}\nData creării: ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}\n\nTe rugăm să păstrezi acest bilet pentru verificare.`;
+        // Send via Infobip API with fallback
+        try {
+            const result = await sendTicketViaMessaging(ticket._id || ticket.id, phoneNumber, null, imageUrl);
+            
+            if (result && result.success) {
+                if (result.method === 'Infobip_API') {
+                    showSuccess('✅ Bilet trimis automat prin Infobip WhatsApp API!');
+                } else if (result.method === 'WhatsApp_Link' && result.link) {
+                    showSuccess('Bilet pregătit pentru WhatsApp! Click pe link pentru a trimite.');
+                    if (confirm('Vrei să deschizi WhatsApp Web automat?')) {
+                        window.open(result.link, '_blank');
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error sending ticket via Infobip API:', error);
+            showError('Eroare la trimiterea biletului: ' + error.message);
+        } finally {
+            // Clean up image URL if created
+            if (imageUrl) {
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(imageUrl);
+                }, 30000);
+            }
+        }
         
-        // Open WhatsApp with text message only
-        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-        
-        showSuccess('WhatsApp deschis! Adaugă manual QR code-ul din bilet.');
     } catch (e) {
         console.error('Failed to send ticket via WhatsApp', e);
         showError('Eroare la trimiterea biletului prin WhatsApp');
@@ -1850,12 +1847,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load tickets table on bilete page
     if (window.location.pathname.includes('bilete.html')) {
         loadTicketsTable();
+        updateWhatsAppStatus();
     }
 
-    // Load messaging service management page
-    if (window.location.pathname.includes('bot.html')) {
-        loadMessagingManagement();
-    }
+    // Removed bot.html page loading - now integrated into bilete.html
 
     // Update navigation based on authentication status
     updateNavigation();
