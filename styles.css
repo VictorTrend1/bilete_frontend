@@ -1567,54 +1567,10 @@ body {
     color: #007bff;
 }
 
-/* Tickets Filter Styles */
-.tickets-filters {
-    display: flex;
-    gap: 0.5rem;
-    margin: 1rem 0;
-    flex-wrap: wrap;
-}
-
-.filter-btn {
-    padding: 0.5rem 1rem;
-    border: 2px solid transparent;
-    border-radius: 6px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.filter-btn.active {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.filter-btn:not(.active) {
-    background: #f8f9fa;
-    color: #6c757d;
-    border-color: #dee2e6;
-}
-
-.filter-btn:not(.active):hover {
-    background: #e9ecef;
-    color: #495057;
-    border-color: #adb5bd;
-}
-
-.filter-status {
-    margin-left: 1rem;
-    padding: 0.5rem 1rem;
-    background: rgba(102, 126, 234, 0.1);
+/* Tickets Summary Styles */
+#tickets-summary {
     color: #667eea;
-    border-radius: 6px;
-    font-size: 0.9rem;
     font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.filter-status::before {
-    content: "📊";
     font-size: 1rem;
+    margin: 0.5rem 0;
 }
