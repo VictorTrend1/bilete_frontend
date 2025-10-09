@@ -1010,6 +1010,50 @@ async function sendTicketViaBotEnhanced(el) {
             if (result && result.success) {
                 if (result.method === 'Infobip_API') {
                     showSuccess('✅ Bilet trimis automat prin Infobip WhatsApp API!');
+                    
+                    // Mark ticket as sent automatically
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/tickets/${ticket._id || ticket.id}/sent`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${getToken()}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ sent: true })
+                        });
+                        
+                        if (response.ok) {
+                            // Update the ticket in allTickets array
+                            const ticketIndex = allTickets.findIndex(t => (t._id || t.id) === (ticket._id || ticket.id));
+                            if (ticketIndex !== -1) {
+                                allTickets[ticketIndex].sent = true;
+                                allTickets[ticketIndex].sent_at = new Date();
+                            }
+                            
+                            // Update the checkbox in the table if it exists
+                            const checkbox = document.querySelector(`input[data-ticket-id="${ticket._id || ticket.id}"]`);
+                            if (checkbox) {
+                                checkbox.checked = true;
+                                const label = checkbox.parentElement;
+                                const textSpan = label.querySelector('span:not(.checkmark)');
+                                if (textSpan) {
+                                    textSpan.textContent = 'Trimis';
+                                }
+                            }
+                            
+                            // Refresh current filter
+                            const activeFilter = document.querySelector('.filter-btn.active');
+                            if (activeFilter) {
+                                const filterId = activeFilter.id.replace('filter-', '');
+                                filterTickets(filterId);
+                            }
+                            
+                            // Reload cost calculation
+                            await loadCostCalculation();
+                        }
+                    } catch (markError) {
+                        console.log('Could not mark ticket as sent automatically:', markError);
+                    }
                 } else {
                     showError('Infobip API nu este disponibil. Te rugăm să încerci din nou mai târziu.');
                 }
@@ -1029,6 +1073,8 @@ async function sendTicketViaBotEnhanced(el) {
 
 
 // Tickets table functions
+let allTickets = []; // Store all tickets for filtering
+
 async function loadTicketsTable() {
     try {
         const token = getToken();
@@ -1048,10 +1094,149 @@ async function loadTicketsTable() {
             throw new Error(data.error || 'Failed to load tickets');
         }
 
-        displayTicketsTable(data.tickets);
+        allTickets = data.tickets; // Store all tickets
+        displayTicketsTable(allTickets);
+        await loadCostCalculation();
     } catch (error) {
         console.error('Error loading tickets:', error);
     }
+}
+
+// Filter tickets by sent status
+function filterTickets(filter) {
+    let filteredTickets = allTickets;
+    
+    switch(filter) {
+        case 'not-sent':
+            filteredTickets = allTickets.filter(ticket => !ticket.sent);
+            break;
+        case 'sent':
+            filteredTickets = allTickets.filter(ticket => ticket.sent);
+            break;
+        case 'all':
+        default:
+            filteredTickets = allTickets;
+            break;
+    }
+    
+    displayTicketsTable(filteredTickets);
+    
+    // Update active filter button
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(`filter-${filter}`).classList.add('active');
+}
+
+// Update ticket sent status
+async function updateTicketSentStatus(checkbox) {
+    try {
+        const ticketId = checkbox.getAttribute('data-ticket-id');
+        const sent = checkbox.checked;
+        
+        const token = getToken();
+        if (!token) {
+            showError('Nu ești autentificat. Te rugăm să te conectezi din nou.');
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/tickets/${ticketId}/sent`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ sent })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to update ticket status');
+        }
+
+        // Update the label text
+        const label = checkbox.parentElement;
+        const textSpan = label.querySelector('span:not(.checkmark)');
+        if (textSpan) {
+            textSpan.textContent = sent ? 'Trimis' : 'Netrimis';
+        }
+
+        showSuccess(`Bilet ${sent ? 'marcat ca trimis' : 'marcat ca netrimis'}`);
+        
+        // Update the ticket in allTickets array
+        const ticketIndex = allTickets.findIndex(ticket => (ticket._id || ticket.id) === ticketId);
+        if (ticketIndex !== -1) {
+            allTickets[ticketIndex].sent = sent;
+            allTickets[ticketIndex].sent_at = sent ? new Date() : null;
+        }
+        
+        // Refresh current filter
+        const activeFilter = document.querySelector('.filter-btn.active');
+        if (activeFilter) {
+            const filterId = activeFilter.id.replace('filter-', '');
+            filterTickets(filterId);
+        }
+        
+        // Reload cost calculation
+        await loadCostCalculation();
+    } catch (error) {
+        console.error('Error updating ticket sent status:', error);
+        showError('Eroare la actualizarea statusului biletului: ' + error.message);
+        // Revert checkbox state
+        checkbox.checked = !checkbox.checked;
+    }
+}
+
+// Load and display cost calculation
+async function loadCostCalculation() {
+    try {
+        const token = getToken();
+        if (!token) {
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/tickets/cost`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to load cost calculation');
+        }
+
+        displayCostCalculation(data);
+    } catch (error) {
+        console.error('Error loading cost calculation:', error);
+    }
+}
+
+// Display cost calculation
+function displayCostCalculation(costData) {
+    const costContainer = document.getElementById('cost-calculation');
+    if (!costContainer) return;
+
+    costContainer.innerHTML = `
+        <div class="cost-summary">
+            <h3>💰 Calculul Costurilor</h3>
+            <div class="cost-total">
+                <strong>Total: ${costData.totalCost} lei</strong>
+                <span class="ticket-count">(${costData.totalTickets} bilete)</span>
+            </div>
+            <div class="cost-breakdown">
+                ${costData.breakdown.map(item => `
+                    <div class="cost-item">
+                        <span class="ticket-type">${item.ticketType}</span>
+                        <span class="ticket-count">${item.count} x ${item.unitPrice} lei</span>
+                        <span class="ticket-total">= ${item.total} lei</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
 }
 
 function displayTicketsTable(tickets) {
@@ -1078,6 +1263,17 @@ function displayTicketsTable(tickets) {
             <td>${new Date(ticket.created_at).toLocaleDateString('ro-RO')}</td>
             <td class="${ticket.verified ? 'status-verified' : 'status-pending'}">
                 ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}
+            </td>
+            <td class="sent-status">
+                <label class="sent-checkbox-label">
+                    <input type="checkbox" 
+                           class="sent-checkbox" 
+                           data-ticket-id="${ticket._id || ticket.id}"
+                           ${ticket.sent ? 'checked' : ''}
+                           onchange="updateTicketSentStatus(this)">
+                    <span class="checkmark"></span>
+                    ${ticket.sent ? 'Trimis' : 'Netrimis'}
+                </label>
             </td>
             <td class="actions">
                 <button class="btn btn-primary" data-id="${ticket._id || ticket.id}" onclick="viewTicketFromButton(this)">
@@ -1750,6 +1946,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.location.pathname.includes('bilete.html')) {
         loadTicketsTable();
         updateWhatsAppStatus();
+        
+        // Add filter button event listeners
+        document.getElementById('filter-all')?.addEventListener('click', () => filterTickets('all'));
+        document.getElementById('filter-not-sent')?.addEventListener('click', () => filterTickets('not-sent'));
+        document.getElementById('filter-sent')?.addEventListener('click', () => filterTickets('sent'));
     }
 
     // Removed bot.html page loading - now integrated into bilete.html

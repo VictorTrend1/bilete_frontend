@@ -27,6 +27,11 @@
             <div class="tickets-header">
                 <h2>Biletele Tale</h2>
                 <p>Toate biletele create</p>
+                <div class="tickets-filters">
+                    <button id="filter-all" class="btn btn-primary filter-btn active">Toate</button>
+                    <button id="filter-not-sent" class="btn btn-secondary filter-btn">Netrimis</button>
+                    <button id="filter-sent" class="btn btn-success filter-btn">Trimis</button>
+                </div>
                 <div id="whatsapp-status" class="whatsapp-status">
                     <div class="status-indicator">
                         <i class="fas fa-spinner fa-spin"></i>
@@ -46,6 +51,7 @@
                             <th>Grup</th>
                             <th>Data Creării</th>
                             <th>Status</th>
+                            <th>Trimis</th>
                             <th>Acțiuni</th>
                         </tr>
                     </thead>
@@ -60,6 +66,11 @@
                 <h3>Nu ai bilete încă</h3>
                 <p>Creează primul tău bilet din dashboard</p>
                 <a href="dashboard.html" class="btn btn-primary">Creează Bilet</a>
+            </div>
+
+            <!-- Cost Calculation Section -->
+            <div id="cost-calculation" class="cost-calculation-section">
+                <!-- Cost calculation will be loaded here -->
             </div>
         </div>
     </main>
