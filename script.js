@@ -762,43 +762,13 @@ async function sendTicketViaMessaging(ticketId, phoneNumber, email = null, custo
 
         const ticketData = await ticketResponse.json();
         
-        // Try to send via Infobip API first
-        try {
-            const infobipResult = await sendTicketViaInfobip(ticketData, phoneNumber, customImagePath);
-            
-            if (infobipResult.success) {
-                showSuccess('✅ Bilet trimis automat prin Infobip WhatsApp API!');
-                return { success: true, method: 'Infobip_API', data: infobipResult.data };
-            } else {
-                throw new Error(infobipResult.error || 'Infobip API failed');
-            }
-        } catch (infobipError) {
-            console.log('Infobip API failed, falling back to manual WhatsApp link:', infobipError.message);
-            
-            // Fallback to manual WhatsApp link
-            const message = `🎫 *Bilet BAL*
-
-👤 *Nume:* ${ticketData.nume}
-📞 *Telefon:* ${ticketData.telefon}
-🎫 *Tip bilet:* ${ticketData.tip_bilet}
-📅 *Data creării:* ${new Date(ticketData.created_at).toLocaleDateString('ro-RO')}
-
-✅ Biletul dumneavoastră este gata!
-📱 Păstrați acest mesaj pentru validare.
-
-_Mesaj automat trimis prin sistemul de bilete_`;
-
-            const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
-            
-            const fallbackMessage = `Bilet pregătit pentru WhatsApp!\n\nClick pe link-ul de mai jos pentru a trimite biletul:\n\n${whatsappUrl}`;
-            showSuccess(fallbackMessage);
-            
-            // Optionally open the WhatsApp link automatically
-            if (confirm('Vrei să deschizi WhatsApp Web automat?')) {
-                window.open(whatsappUrl, '_blank');
-            }
-            
-            return { success: true, method: 'WhatsApp_Link', link: whatsappUrl };
+        // Send via Infobip API only
+        const infobipResult = await sendTicketViaInfobip(ticketData, phoneNumber, customImagePath);
+        
+        if (infobipResult.success) {
+            return { success: true, method: 'Infobip_API', data: infobipResult.data };
+        } else {
+            throw new Error(infobipResult.error || 'Infobip API failed');
         }
         
     } catch (error) {
@@ -1058,19 +1028,18 @@ async function sendTicketViaBotEnhanced(el) {
             }
         }
         
-        // Send via Infobip API with fallback
+        // Send via Infobip API only
         try {
             const result = await sendTicketViaMessaging(ticket._id || ticket.id, phoneNumber, null, imageUrl);
             
             if (result && result.success) {
                 if (result.method === 'Infobip_API') {
                     showSuccess('✅ Bilet trimis automat prin Infobip WhatsApp API!');
-                } else if (result.method === 'WhatsApp_Link' && result.link) {
-                    showSuccess('Bilet pregătit pentru WhatsApp! Click pe link pentru a trimite.');
-                    if (confirm('Vrei să deschizi WhatsApp Web automat?')) {
-                        window.open(result.link, '_blank');
-                    }
+                } else {
+                    showError('Infobip API nu este disponibil. Te rugăm să încerci din nou mai târziu.');
                 }
+            } else {
+                showError('Eroare la trimiterea biletului prin Infobip API.');
             }
         } catch (error) {
             console.error('Error sending ticket via Infobip API:', error);
@@ -1203,19 +1172,18 @@ async function sendTicketViaWhatsApp(el) {
             }
         }
         
-        // Send via Infobip API with fallback
+        // Send via Infobip API only
         try {
             const result = await sendTicketViaMessaging(ticket._id || ticket.id, phoneNumber, null, imageUrl);
             
             if (result && result.success) {
                 if (result.method === 'Infobip_API') {
                     showSuccess('✅ Bilet trimis automat prin Infobip WhatsApp API!');
-                } else if (result.method === 'WhatsApp_Link' && result.link) {
-                    showSuccess('Bilet pregătit pentru WhatsApp! Click pe link pentru a trimite.');
-                    if (confirm('Vrei să deschizi WhatsApp Web automat?')) {
-                        window.open(result.link, '_blank');
-                    }
+                } else {
+                    showError('Infobip API nu este disponibil. Te rugăm să încerci din nou mai târziu.');
                 }
+            } else {
+                showError('Eroare la trimiterea biletului prin Infobip API.');
             }
         } catch (error) {
             console.error('Error sending ticket via Infobip API:', error);
