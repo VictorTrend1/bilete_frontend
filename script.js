@@ -663,7 +663,7 @@ async function sendMessageViaInfobip(phoneNumber, message, imageUrl = null) {
 }
 
 // Send ticket via Infobip API
-async function sendTicketViaInfobip(ticketData, phoneNumber, imageUrl = null) {
+async function sendTicketViaInfobip(ticketData, phoneNumber) {
     try {
         console.log('Sending ticket via Infobip API...');
         
@@ -675,8 +675,7 @@ async function sendTicketViaInfobip(ticketData, phoneNumber, imageUrl = null) {
             },
             body: JSON.stringify({
                 ticketData: ticketData,
-                phoneNumber: phoneNumber,
-                imageUrl: imageUrl
+                phoneNumber: phoneNumber
             })
         });
         
@@ -738,7 +737,7 @@ async function updateWhatsAppStatus() {
 
 
 // Send ticket via messaging service (Infobip API)
-async function sendTicketViaMessaging(ticketId, phoneNumber, email = null, customImagePath = null) {
+async function sendTicketViaMessaging(ticketId, phoneNumber, email = null) {
     try {
         const token = getToken();
         if (!token) {
@@ -746,7 +745,7 @@ async function sendTicketViaMessaging(ticketId, phoneNumber, email = null, custo
             return;
         }
 
-        console.log('Sending ticket via Infobip API:', { ticketId, phoneNumber, email, customImagePath });
+        console.log('Sending ticket via Infobip API:', { ticketId, phoneNumber, email });
 
         // Get ticket data
         const ticketResponse = await fetch(`${API_BASE_URL}/tickets/${ticketId}`, {
@@ -763,7 +762,7 @@ async function sendTicketViaMessaging(ticketId, phoneNumber, email = null, custo
         const ticketData = await ticketResponse.json();
         
         // Send via Infobip API only
-        const infobipResult = await sendTicketViaInfobip(ticketData, phoneNumber, customImagePath);
+        const infobipResult = await sendTicketViaInfobip(ticketData, phoneNumber);
         
         if (infobipResult.success) {
             return { success: true, method: 'Infobip_API', data: infobipResult.data };
@@ -808,18 +807,14 @@ async function sendBulkTicketsViaMessaging(ticketIds, phoneNumbers, emails = nul
         // Prepare messages for Infobip API
         const messages = tickets.map((ticket, index) => ({
             phoneNumber: phoneNumbers[index],
-            message: `🎫 *Bilet BAL*
+            message: `*Bilet BAL*
 
-👤 *Nume:* ${ticket.nume}
-📞 *Telefon:* ${ticket.telefon}
-🎫 *Tip bilet:* ${ticket.tip_bilet}
-📅 *Data creării:* ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}
+*Nume:* ${ticket.nume}
+*Telefon:* ${ticket.telefon}
+*Tip bilet:* ${ticket.tip_bilet}
 
-✅ Biletul dumneavoastră este gata!
-📱 Păstrați acest mesaj pentru validare.
-
-_Mesaj automat trimis prin sistemul de bilete_`,
-            imageUrl: customImagePaths ? customImagePaths[index] : null
+*Vezi biletul complet:* https://www.site-bilete.shop/verificare.html?id=${ticket._id}
+*Descarcă biletul:* https://www.site-bilete.shop/api/tickets/${ticket._id}/qr.png`
         }));
 
         // Try to send via Infobip API
@@ -849,17 +844,14 @@ _Mesaj automat trimis prin sistemul de bilete_`,
             for (let i = 0; i < tickets.length; i++) {
                 const ticket = tickets[i];
                 const phoneNumber = phoneNumbers[i];
-                const message = `🎫 *Bilet BAL*
+                const message = `*Bilet BAL*
 
-👤 *Nume:* ${ticket.nume}
-📞 *Telefon:* ${ticket.telefon}
-🎫 *Tip bilet:* ${ticket.tip_bilet}
-📅 *Data creării:* ${new Date(ticket.created_at).toLocaleDateString('ro-RO')}
+*Nume:* ${ticket.nume}
+*Telefon:* ${ticket.telefon}
+*Tip bilet:* ${ticket.tip_bilet}
 
-✅ Biletul dumneavoastră este gata!
-📱 Păstrați acest mesaj pentru validare.
-
-_Mesaj automat trimis prin sistemul de bilete_`;
+*Vezi biletul complet:* https://www.site-bilete.shop/verificare.html?id=${ticket._id}
+*Descarcă biletul:* https://www.site-bilete.shop/api/tickets/${ticket._id}/qr.png`;
 
                 const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
                 results.push({ ticketId: ticket._id, phoneNumber, link: whatsappUrl, method: 'WhatsApp_Link' });
@@ -1011,26 +1003,9 @@ async function sendTicketViaBotEnhanced(el) {
         
         console.log('Sending ticket via Infobip API:', { ticketId: ticket._id, phoneNumber });
         
-        // Check if it's a BAL ticket for custom image generation
-        let imageUrl = null;
-        if (ticket.tip_bilet === 'BAL') {
-            try {
-                // Generate custom BAL ticket
-                const customResponse = await fetch(`${API_BASE_URL}/tickets/${ticket._id || ticket.id}/custom-bal-public`);
-                
-                if (customResponse.ok) {
-                    const blob = await customResponse.blob();
-                    imageUrl = window.URL.createObjectURL(blob);
-                }
-            } catch (error) {
-                console.error('Failed to generate custom BAL ticket:', error);
-                // Continue without image
-            }
-        }
-        
         // Send via Infobip API only
         try {
-            const result = await sendTicketViaMessaging(ticket._id || ticket.id, phoneNumber, null, imageUrl);
+            const result = await sendTicketViaMessaging(ticket._id || ticket.id, phoneNumber, null);
             
             if (result && result.success) {
                 if (result.method === 'Infobip_API') {
@@ -1044,13 +1019,6 @@ async function sendTicketViaBotEnhanced(el) {
         } catch (error) {
             console.error('Error sending ticket via Infobip API:', error);
             showError('Eroare la trimiterea biletului: ' + error.message);
-        } finally {
-            // Clean up image URL if created
-            if (imageUrl) {
-                setTimeout(() => {
-                    window.URL.revokeObjectURL(imageUrl);
-                }, 30000);
-            }
         }
         
     } catch (error) {
@@ -1145,36 +1113,9 @@ async function sendTicketViaWhatsApp(el) {
         
         console.log('Sending ticket via Infobip API:', { ticketId: ticket._id, phoneNumber });
         
-        // Check if it's a BAL ticket for custom image generation
-        let imageUrl = null;
-        if (ticket.tip_bilet === 'BAL') {
-            try {
-                console.log('Generating custom BAL ticket for:', ticket);
-                // Use public endpoint for sharing (no auth required)
-                const customResponse = await fetch(`${API_BASE_URL}/tickets/${ticket._id || ticket.id}/custom-bal-public`);
-                
-                console.log('Custom BAL response status:', customResponse.status);
-                
-                if (customResponse.ok) {
-                    // Get the custom ticket image as blob
-                    const blob = await customResponse.blob();
-                    console.log('BAL ticket blob size:', blob.size, 'type:', blob.type);
-                    
-                    imageUrl = window.URL.createObjectURL(blob);
-                    console.log('Created image URL:', imageUrl);
-                } else {
-                    const errorText = await customResponse.text();
-                    console.error('Custom BAL ticket generation failed:', customResponse.status, errorText);
-                }
-            } catch (error) {
-                console.error('Failed to generate custom BAL ticket:', error);
-                // Continue without image
-            }
-        }
-        
         // Send via Infobip API only
         try {
-            const result = await sendTicketViaMessaging(ticket._id || ticket.id, phoneNumber, null, imageUrl);
+            const result = await sendTicketViaMessaging(ticket._id || ticket.id, phoneNumber, null);
             
             if (result && result.success) {
                 if (result.method === 'Infobip_API') {
@@ -1188,13 +1129,6 @@ async function sendTicketViaWhatsApp(el) {
         } catch (error) {
             console.error('Error sending ticket via Infobip API:', error);
             showError('Eroare la trimiterea biletului: ' + error.message);
-        } finally {
-            // Clean up image URL if created
-            if (imageUrl) {
-                setTimeout(() => {
-                    window.URL.revokeObjectURL(imageUrl);
-                }, 30000);
-            }
         }
         
     } catch (e) {
@@ -2053,7 +1987,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             try {
-                await sendTicketViaMessaging(ticketId, phoneNumber, null, includeCustomImage ? 'auto' : null);
+                await sendTicketViaMessaging(ticketId, phoneNumber, null);
                 closeSendTicketModal();
             } catch (error) {
                 showError(error.message);
