@@ -302,14 +302,15 @@ body {
 .tickets-table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 800px;
+    min-width: 600px;
 }
 
 .tickets-table th,
 .tickets-table td {
-    padding: 1rem;
+    padding: 0.5rem;
     text-align: left;
     border-bottom: 1px solid #e9ecef;
+    font-size: 0.9rem;
 }
 
 .tickets-table th {
@@ -328,10 +329,10 @@ body {
 }
 
 .tickets-table .btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    margin-right: 0.5rem;
-    margin-bottom: 0.25rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    margin-right: 0.3rem;
+    margin-bottom: 0.2rem;
 }
 
 /* QR Modal */
