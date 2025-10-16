@@ -302,7 +302,7 @@ async function downloadTicketQRFromButton(el) {
             throw new Error(ticketData.error || 'Nu am putut descărca QR-ul');
         }
         
-        // Check if it's a BAL ticket for custom generation
+        // Check if it's a BAL or AFTER ticket for custom generation
         if (ticketData.ticket && ticketData.ticket.tip_bilet === 'BAL') {
             // Use custom BAL ticket generation
             const customResponse = await fetch(`${API_BASE_URL}/tickets/${id}/custom-bal`, {
@@ -322,8 +322,25 @@ async function downloadTicketQRFromButton(el) {
             link.download = `bilet-${ticketData.ticket.nume}-${id}.png`;
             link.click();
             window.URL.revokeObjectURL(url);
+        } else if (ticketData.ticket && ticketData.ticket.tip_bilet === 'AFTER') {
+            // Use custom AFTER ticket generation (public endpoint)
+            const customResponse = await fetch(`${API_BASE_URL}/tickets/${id}/custom-public`);
+            
+            if (!customResponse.ok) {
+                const errorData = await customResponse.json();
+                throw new Error(errorData.error || 'Nu am putut genera biletul personalizat AFTER');
+            }
+            
+            // Download the custom ticket as blob
+            const blob = await customResponse.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `bilet-after-${ticketData.ticket.nume}-${id}.png`;
+            link.click();
+            window.URL.revokeObjectURL(url);
         } else {
-            // Use regular QR code download for non-BAL tickets
+            // Use regular QR code download for other ticket types
             downloadDataUrl(ticketData.qr_code, `bilet-${id}.png`);
         }
     } catch (e) {
@@ -2130,12 +2147,35 @@ async function loadTicketPreview(ticketId) {
                     window.open(ticketImageUrl, '_blank');
                 };
             }
+        } else if (ticket.tip_bilet === 'AFTER') {
+            // For AFTER tickets, use the custom ticket generation
+            const ticketImageUrl = `${API_BASE_URL}/tickets/${ticketId}/custom-public`;
+            if (previewImg) {
+                previewImg.src = ticketImageUrl;
+                previewImg.onload = function() {
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+                    previewImg.style.display = 'block';
+                };
+                previewImg.onerror = function() {
+                    if (loadingDiv) loadingDiv.style.display = 'none';
+                    showError('Eroare la generarea preview-ului biletului AFTER');
+                };
+            }
+            
+            // Show download button
+            const downloadBtn = document.getElementById('download-ticket');
+            if (downloadBtn) {
+                downloadBtn.style.display = 'inline-block';
+                downloadBtn.onclick = () => {
+                    window.open(ticketImageUrl, '_blank');
+                };
+            }
         } else {
-            // For non-BAL tickets, show a message
+            // For other ticket types, show a message
             if (loadingDiv) {
                 loadingDiv.innerHTML = `
                     <i class="fas fa-info-circle" style="font-size: 2rem; color: #17a2b8; margin-bottom: 1rem;"></i>
-                    <p>Preview personalizat disponibil doar pentru biletele BAL</p>
+                    <p>Preview personalizat disponibil doar pentru biletele BAL și AFTER</p>
                     <p>Tip bilet: ${ticket.tip_bilet}</p>
                 `;
             }
