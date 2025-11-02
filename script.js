@@ -290,59 +290,48 @@ async function downloadTicketQRFromButton(el) {
     if (!id) return;
     
     try {
+        // Get ticket details first to get the ticket name for filename
         const token = getToken();
-        
-        // First, get ticket details to check if it's a BAL ticket
         const ticketResponse = await fetch(`${API_BASE_URL}/tickets/${id}/qr`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const ticketData = await ticketResponse.json();
         
         if (!ticketResponse.ok) {
-            throw new Error(ticketData.error || 'Nu am putut descărca QR-ul');
+            throw new Error(ticketData.error || 'Nu am putut descărca biletul');
         }
         
-        // Check if it's a BAL or AFTER ticket for custom generation
-        if (ticketData.ticket && ticketData.ticket.tip_bilet === 'BAL') {
-            // Use custom BAL ticket generation
-            const customResponse = await fetch(`${API_BASE_URL}/tickets/${id}/custom-bal`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            
-            if (!customResponse.ok) {
-                const errorData = await customResponse.json();
-                throw new Error(errorData.error || 'Nu am putut genera biletul personalizat');
-            }
-            
-            // Download the custom ticket as blob
-            const blob = await customResponse.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `bilet-${ticketData.ticket.nume}-${id}.png`;
-            link.click();
-            window.URL.revokeObjectURL(url);
-        } else if (ticketData.ticket && ticketData.ticket.tip_bilet === 'AFTER') {
-            // Use custom AFTER ticket generation (public endpoint)
-            const customResponse = await fetch(`${API_BASE_URL}/tickets/${id}/custom-public`);
-            
-            if (!customResponse.ok) {
-                const errorData = await customResponse.json();
-                throw new Error(errorData.error || 'Nu am putut genera biletul personalizat AFTER');
-            }
-            
-            // Download the custom ticket as blob
-            const blob = await customResponse.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `bilet-after-${ticketData.ticket.nume}-${id}.png`;
-            link.click();
-            window.URL.revokeObjectURL(url);
-        } else {
-            // Use regular QR code download for other ticket types
-            downloadDataUrl(ticketData.qr_code, `bilet-${id}.png`);
+        // Use custom-public endpoint for all ticket types to generate full ticket
+        const customResponse = await fetch(`${API_BASE_URL}/tickets/${id}/custom-public`);
+        
+        if (!customResponse.ok) {
+            const errorData = await customResponse.json();
+            throw new Error(errorData.error || 'Nu am putut genera biletul personalizat');
         }
+        
+        // Download the custom ticket as blob
+        const blob = await customResponse.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Generate filename based on ticket type and name
+        const ticketType = ticketData.ticket?.tip_bilet || '';
+        const ticketName = ticketData.ticket?.nume || 'bilet';
+        let filename = `bilet-${ticketName}-${id}.png`;
+        
+        // Customize filename for specific ticket types
+        if (ticketType === 'AFTER') {
+            filename = `bilet-after-${ticketName}-${id}.png`;
+        } else if (ticketType === 'BAL + AFTER VIP') {
+            filename = `bilet-bal-after-vip-${ticketName}-${id}.png`;
+        } else if (ticketType === 'AFTER VIP') {
+            filename = `bilet-after-vip-${ticketName}-${id}.png`;
+        }
+        
+        link.download = filename;
+        link.click();
+        window.URL.revokeObjectURL(url);
     } catch (e) {
         showError(e.message);
     }
