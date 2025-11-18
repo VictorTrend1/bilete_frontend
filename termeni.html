@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termeni și Condiții - Site Bilete</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .terms-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 3rem;
+            margin: 2rem auto;
+            max-width: 900px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .terms-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .terms-header h1 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .terms-content {
+            line-height: 1.8;
+            color: #2d3748;
+        }
+
+        .terms-content h2 {
+            color: #667eea;
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .terms-content h3 {
+            color: #764ba2;
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .terms-content p {
+            margin-bottom: 1rem;
+            text-align: justify;
+        }
+
+        .terms-content ul {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .terms-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .terms-content strong {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .contact-info {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 2rem;
+            border-left: 4px solid #667eea;
+        }
+
+        .contact-info strong {
+            color: #667eea;
+        }
+
+        .back-link {
+            text-align: center;
+            margin-top: 2rem;
+        }
+
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-link a:hover {
+            color: #764ba2;
+            transform: translateX(-5px);
+        }
+
+        @media (max-width: 768px) {
+            .terms-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .terms-header h1 {
+                font-size: 2rem;
+            }
+
+            .terms-content h2 {
+                font-size: 1.3rem;
+            }
+
+            .terms-content h3 {
+                font-size: 1.1rem;
+            }
+
+            .terms-content ul {
+                margin-left: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">🎫 Site Bilete</h1>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="bilete.html" class="nav-link">Bilete</a>
+                <a href="verificare.html" class="nav-link">Verificare</a>
+                <a href="login.html" class="nav-link">Conectare</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content container">
+        <div class="terms-container">
+            <div class="terms-header">
+                <h1>Termeni și Condiții</h1>
+                <p style="color: #666; margin: 0;">Ultima actualizare: 2025</p>
+            </div>
+
+            <div class="terms-content">
+                <h2>1. Introducere</h2>
+                <p>Prezenții <strong>Termeni și Condiții</strong> („Termeni") reglementează utilizarea platformei noastre de generare a biletelor („Platforma"). Prin accesarea și utilizarea Platformei, utilizatorul confirmă că a citit, a înțeles și este de acord cu acești Termeni. Dacă nu ești de acord, te rugăm să nu folosești Platforma.</p>
+
+                <h2>2. Definiții</h2>
+                <p><strong>Platformă</strong> – serviciul online prin care sunt generate bilete personalizate pentru diverse evenimente, servicii sau activități.</p>
+                <p><strong>Utilizator</strong> – orice persoană care accesează, folosește sau interacționează cu Platforma.</p>
+                <p><strong>Date cu caracter personal</strong> – numele complet și numărul de telefon, colectate în scopul generării biletelor.</p>
+
+                <h2>3. Utilizarea Platformei</h2>
+                <h3>3.1.</h3>
+                <p>Platforma este oferită „așa cum este", fără garanții suplimentare cu privire la funcționalitate, disponibilitate sau acuratețea rezultatului generat.</p>
+                
+                <h3>3.2.</h3>
+                <p>Utilizatorul este responsabil pentru corectitudinea datelor introduse.</p>
+                
+                <h3>3.3.</h3>
+                <p>Platforma nu poate fi folosită în scopuri ilegale, frauduloase sau care pot afecta integritatea sistemului.</p>
+
+                <h2>4. Colectarea și Prelucrarea Datelor Personale</h2>
+                <h3>4.1.</h3>
+                <p>Pentru generarea biletelor, Platforma colectează numele întreg și numărul de telefon al utilizatorului.</p>
+                
+                <h3>4.2.</h3>
+                <p>Aceste date sunt utilizate exclusiv pentru:</p>
+                <ul>
+                    <li>generarea biletului personalizat;</li>
+                    <li>validarea identității în procesul de emitere a biletelor;</li>
+                    <li>comunicări legate strict de procesul de generare sau livrare a biletelor.</li>
+                </ul>
+                
+                <h3>4.3.</h3>
+                <p>Datele nu sunt vândute și nu sunt transferate către terți, cu excepția cazurilor impuse de lege sau atunci când este necesar pentru prestarea serviciului (ex. integrare cu sistemul de validare al organizatorului).</p>
+                
+                <h3>4.4.</h3>
+                <p>Datele sunt stocate doar pe perioada necesară îndeplinirii scopului pentru care au fost colectate.</p>
+
+                <h2>5. Drepturile Utilizatorului</h2>
+                <p>Conform legislației privind protecția datelor (ex. GDPR, dacă se aplică), utilizatorul are următoarele drepturi:</p>
+                <ul>
+                    <li>dreptul de acces la datele sale;</li>
+                    <li>dreptul de rectificare a datelor incorecte;</li>
+                    <li>dreptul de ștergere („dreptul de a fi uitat");</li>
+                    <li>dreptul la restricționarea prelucrării;</li>
+                    <li>dreptul de opoziție;</li>
+                    <li>dreptul de portabilitate a datelor.</li>
+                </ul>
+                <p>Pentru exercitarea acestor drepturi, utilizatorul poate transmite o solicitare la adresa de contact a Platformei.</p>
+
+                <h2>6. Securitatea Datelor</h2>
+                <h3>6.1.</h3>
+                <p>Platforma implementează măsuri tehnice și organizatorice pentru protecția datelor împotriva accesului neautorizat, pierderii, distrugerii sau alterării.</p>
+                
+                <h3>6.2.</h3>
+                <p>Cu toate acestea, utilizatorul înțelege că niciun sistem nu poate garanta securitate absolută.</p>
+
+                <h2>7. Limitarea Răspunderii</h2>
+                <h3>7.1.</h3>
+                <p>Platforma nu este responsabilă pentru eventuale erori de funcționare, indisponibilitate temporară sau pierderi de date ce pot apărea ca urmare a unor factori independenți de controlul nostru.</p>
+                
+                <h3>7.2.</h3>
+                <p>Utilizatorul este responsabil pentru modul în care informațiile generate (ex. biletul) sunt utilizate ulterior.</p>
+
+                <h2>8. Modificarea Termenilor</h2>
+                <p>Platforma își rezervă dreptul de a modifica acești Termeni oricând. Continuarea utilizării Platformei după publicarea modificărilor reprezintă acordul utilizatorului cu noile versiuni ale Termenilor.</p>
+
+                <h2>9. Contact</h2>
+                <div class="contact-info">
+                    <p>Pentru orice întrebări legate de Termeni, funcționarea Platformei sau protecția datelor personale, utilizatorul poate contacta echipa noastră la adresa: <strong>[introdu email/telefon]</strong>.</p>
+                </div>
+
+                <div class="back-link">
+                    <a href="javascript:history.back()">
+                        <i class="fas fa-arrow-left"></i> Înapoi
+                    </a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Site Bilete. Toate drepturile rezervate.</p>
+        <p><a href="termeni.html" style="color: rgba(255, 255, 255, 0.9); text-decoration: none;">Termeni și Condiții</a></p>
+        <p>Made by VictorTrend1</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
