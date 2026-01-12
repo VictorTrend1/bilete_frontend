@@ -2039,13 +2039,13 @@ async function startScanner() {
         const isMobile = window.innerWidth < 768;
         const isTablet = window.innerWidth >= 768 && window.innerWidth < 1024;
         
-        // Enhanced scanner configuration for better sensitivity
+        // Enhanced scanner configuration for maximum sensitivity
         const config = {
-            fps: isMobile ? 10 : (isTablet ? 20 : 30), // Higher FPS for better detection
+            fps: isMobile ? 20 : (isTablet ? 30 : 40), // Much higher FPS for faster detection
             qrbox: function(viewfinderWidth, viewfinderHeight) {
                 const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-                // Larger scanning area for better detection
-                const boxSize = Math.floor(minEdge * (isMobile ? 0.9 : 0.8));
+                // Maximum scanning area for better detection - scan almost the entire viewfinder
+                const boxSize = Math.floor(minEdge * (isMobile ? 0.95 : 0.9));
                 return { width: boxSize, height: boxSize };
             },
             aspectRatio: isMobile ? undefined : (isTablet ? 1.7778 : 1.3333),
@@ -2061,12 +2061,14 @@ async function startScanner() {
             useBarCodeDetectorIfSupported: true,
             rememberLastUsedCamera: true,
             showPermissionRequestIfDenied: true,
-            // Enhanced detection settings
+            // Enhanced detection settings - higher resolution for better sensitivity
             videoConstraints: {
                 facingMode: "environment",
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
-            }
+                width: { ideal: 1920, min: 1280 }, // Higher resolution for better detection
+                height: { ideal: 1080, min: 720 }
+            },
+            // Additional sensitivity settings
+            disableFlip: false // Allow flipping for better detection
         };
 
         // Initialize scanner
