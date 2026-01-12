@@ -1739,20 +1739,20 @@ function showTicketSelectionPopup(tickets) {
     // Get current theme
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     
-    // Theme-aware colors - softer palette
+    // Theme-aware colors - modern palette
     const colors = {
-        modalBg: isDark ? '#252545' : '#ffffff',
-        textPrimary: isDark ? '#e8e8f0' : '#212121',
-        textSecondary: isDark ? '#b8b8c8' : '#616161',
-        textMuted: isDark ? '#888898' : '#9e9e9e',
-        borderColor: isDark ? '#3a3a5a' : '#e0e0e0',
-        borderVerified: isDark ? 'rgba(129, 199, 132, 0.4)' : 'rgba(102, 187, 106, 0.5)',
-        bgVerified: isDark ? 'rgba(129, 199, 132, 0.1)' : 'rgba(102, 187, 106, 0.08)',
-        overlay: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)',
-        primary: isDark ? '#7c8fd4' : '#5c6bc0',
-        success: isDark ? '#81c784' : '#66bb6a',
-        warning: isDark ? '#ffb74d' : '#ffa726',
-        danger: isDark ? '#e57373' : '#ef5350'
+        modalBg: isDark ? '#1e293b' : '#ffffff',
+        textPrimary: isDark ? '#f1f5f9' : '#0f172a',
+        textSecondary: isDark ? '#cbd5e1' : '#475569',
+        textMuted: isDark ? '#94a3b8' : '#94a3b8',
+        borderColor: isDark ? '#475569' : '#e2e8f0',
+        borderVerified: isDark ? 'rgba(52, 211, 153, 0.4)' : 'rgba(16, 185, 129, 0.5)',
+        bgVerified: isDark ? 'rgba(52, 211, 153, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+        overlay: isDark ? 'rgba(0,0,0,0.7)' : 'rgba(15, 23, 42, 0.5)',
+        primary: isDark ? '#60a5fa' : '#2563eb',
+        success: isDark ? '#34d399' : '#10b981',
+        warning: isDark ? '#fbbf24' : '#f59e0b',
+        danger: isDark ? '#f87171' : '#ef4444'
     };
 
     const popupHTML = `
@@ -1767,7 +1767,7 @@ function showTicketSelectionPopup(tickets) {
                 <div class="tickets-list" style="display: flex; flex-direction: column; gap: 0.65rem;">
                     ${tickets.map((ticket, index) => `
                         <div class="ticket-option" style="border: 1px solid ${ticket.verified ? colors.borderVerified : colors.borderColor}; border-radius: 10px; padding: 1.1rem; cursor: pointer; transition: all 0.2s ease; background: ${ticket.verified ? colors.bgVerified : 'transparent'};"
-                             onmouseover="this.style.borderColor='${colors.primary}'; this.style.boxShadow='0 2px 12px rgba(92, 107, 192, 0.15)';"
+                             onmouseover="this.style.borderColor='${colors.primary}'; this.style.boxShadow='0 2px 12px ${isDark ? 'rgba(96, 165, 250, 0.2)' : 'rgba(37, 99, 235, 0.15)'}';"
                              onmouseout="this.style.borderColor='${ticket.verified ? colors.borderVerified : colors.borderColor}'; this.style.boxShadow='none';"
                              onclick="verifySelectedTicket('${ticket.id}')">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.9rem;">
