@@ -25,6 +25,10 @@
                     <i class="fas fa-check-circle"></i>
                     <span>Verificare</span>
                 </a>
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i>
+                    <span>Întunecat</span>
+                </button>
             </div>
         </div>
     </nav>
@@ -47,7 +51,7 @@
                     <div class="form-group">
                         <label for="referralCode">Cod de referință (obligatoriu):</label>
                         <input type="text" id="referralCode" name="referralCode" placeholder="Introdu codul de referință" required>
-                        <small style="color: #666; font-size: 0.8rem;">Introdu codul primit pentru a te alătura grupului corespunzător</small>
+                        <small class="form-text">Introdu codul primit pentru a te alătura grupului corespunzător</small>
                     </div>
                     
                     <button type="submit" class="btn btn-primary">Înregistrează-te</button>

@@ -4,6 +4,41 @@ const API_BASE_URL = 'https://bilete-backend.onrender.com/api';
 // Messaging Service Configuration
 let messagingStatus = null;
 
+// ========================================
+// THEME MANAGEMENT
+// ========================================
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeToggleButton(savedTheme);
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+    updateThemeToggleButton(newTheme);
+}
+
+function updateThemeToggleButton(theme) {
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        if (theme === 'dark') {
+            themeToggle.innerHTML = '<i class="fas fa-sun"></i> <span>Luminos</span>';
+            themeToggle.title = 'Comută la tema luminoasă';
+        } else {
+            themeToggle.innerHTML = '<i class="fas fa-moon"></i> <span>Întunecat</span>';
+            themeToggle.title = 'Comută la tema întunecată';
+        }
+    }
+}
+
+// Initialize theme immediately
+initTheme();
+
 // Health check function
 async function checkBackendHealth() {
     try {
@@ -1701,36 +1736,52 @@ function showTicketSelectionPopup(tickets) {
         existingPopup.remove();
     }
 
+    // Get current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    
+    // Theme-aware colors
+    const colors = {
+        modalBg: isDark ? '#1e293b' : '#ffffff',
+        textPrimary: isDark ? '#f1f5f9' : '#1e293b',
+        textSecondary: isDark ? '#94a3b8' : '#475569',
+        textMuted: isDark ? '#64748b' : '#94a3b8',
+        borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
+        borderVerified: isDark ? 'rgba(16, 185, 129, 0.4)' : 'rgba(16, 185, 129, 0.5)',
+        bgHover: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
+        bgVerified: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
+        overlay: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)'
+    };
+
     const popupHTML = `
-        <div id="ticket-selection-popup" class="modal" style="display: block; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); backdrop-filter: blur(8px);">
-            <div class="modal-content" style="background: rgba(26, 26, 46, 0.98); margin: 4% auto; padding: 2rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; width: 92%; max-width: 720px; max-height: 85vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 60px rgba(99, 102, 241, 0.15);">
-                <span class="close" onclick="closeTicketSelectionPopup()" style="color: #94a3b8; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; transition: color 0.3s;">&times;</span>
-                <h3 style="margin-top: 0; background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.5rem; font-weight: 700; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
-                    <i class="fas fa-list-ul" style="color: #f59e0b; -webkit-text-fill-color: #f59e0b;"></i> 
+        <div id="ticket-selection-popup" class="modal" style="display: block; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: ${colors.overlay}; backdrop-filter: blur(4px);">
+            <div class="modal-content" style="background: ${colors.modalBg}; margin: 4% auto; padding: 2rem; border: 1px solid ${colors.borderColor}; border-radius: 20px; width: 92%; max-width: 720px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
+                <span class="close" onclick="closeTicketSelectionPopup()" style="color: ${colors.textMuted}; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; transition: color 0.3s;">&times;</span>
+                <h3 style="margin-top: 0; color: ${colors.textPrimary}; font-size: 1.4rem; font-weight: 700; padding-bottom: 1rem; border-bottom: 1px solid ${colors.borderColor};">
+                    <i class="fas fa-list-ul" style="color: #f59e0b; margin-right: 0.5rem;"></i>
                     ${tickets.length} bilete găsite
                 </h3>
-                <p style="color: #94a3b8; margin-bottom: 1.5rem; font-size: 0.95rem;">Selectează biletul pe care dorești să îl verifici:</p>
+                <p style="color: ${colors.textSecondary}; margin: 1rem 0 1.5rem 0; font-size: 0.95rem;">Selectează biletul pe care dorești să îl verifici:</p>
                 <div class="tickets-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
                     ${tickets.map((ticket, index) => `
-                        <div class="ticket-option" style="border: 2px solid ${ticket.verified ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255,255,255,0.08)'}; border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: ${ticket.verified ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.02)'};"
-                             onmouseover="this.style.borderColor='rgba(99, 102, 241, 0.5)'; this.style.boxShadow='0 4px 20px rgba(99, 102, 241, 0.2)'; this.style.transform='translateY(-2px)';"
-                             onmouseout="this.style.borderColor='${ticket.verified ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255,255,255,0.08)'}'; this.style.boxShadow='none'; this.style.transform='translateY(0)';"
+                        <div class="ticket-option" style="border: 2px solid ${ticket.verified ? colors.borderVerified : colors.borderColor}; border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.25s ease; background: ${ticket.verified ? colors.bgVerified : 'transparent'};"
+                             onmouseover="this.style.borderColor='#6366f1'; this.style.boxShadow='0 4px 16px rgba(99, 102, 241, 0.2)'; this.style.transform='translateY(-2px)';"
+                             onmouseout="this.style.borderColor='${ticket.verified ? colors.borderVerified : colors.borderColor}'; this.style.boxShadow='none'; this.style.transform='translateY(0)';"
                              onclick="verifySelectedTicket('${ticket.id}')">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
                                 <div style="flex: 1; min-width: 200px;">
-                                    <h4 style="margin: 0 0 0.5rem 0; color: #f1f5f9; font-size: 1.1rem; font-weight: 600;">
-                                        <i class="fas fa-user" style="color: #a5b4fc; margin-right: 0.5rem;"></i>${escapeHtmlForPopup(ticket.nume)}
+                                    <h4 style="margin: 0 0 0.5rem 0; color: ${colors.textPrimary}; font-size: 1.1rem; font-weight: 600;">
+                                        <i class="fas fa-user" style="color: #6366f1; margin-right: 0.5rem;"></i>${escapeHtmlForPopup(ticket.nume)}
                                     </h4>
-                                    <p style="margin: 0.35rem 0; color: #94a3b8; font-size: 0.9rem;">
-                                        <i class="fas fa-phone" style="color: #64748b; margin-right: 0.5rem;"></i>${escapeHtmlForPopup(ticket.telefon)}
+                                    <p style="margin: 0.35rem 0; color: ${colors.textSecondary}; font-size: 0.9rem;">
+                                        <i class="fas fa-phone" style="color: ${colors.textMuted}; margin-right: 0.5rem;"></i>${escapeHtmlForPopup(ticket.telefon)}
                                     </p>
-                                    <p style="margin: 0.35rem 0; color: #94a3b8; font-size: 0.9rem;">
-                                        <i class="fas fa-calendar" style="color: #64748b; margin-right: 0.5rem;"></i>${new Date(ticket.created_at).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    <p style="margin: 0.35rem 0; color: ${colors.textSecondary}; font-size: 0.9rem;">
+                                        <i class="fas fa-calendar" style="color: ${colors.textMuted}; margin-right: 0.5rem;"></i>${new Date(ticket.created_at).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                     </p>
-                                    ${ticket.group ? `<p style="margin: 0.35rem 0; color: #94a3b8; font-size: 0.9rem;"><i class="fas fa-users" style="color: #64748b; margin-right: 0.5rem;"></i>Grup: ${escapeHtmlForPopup(ticket.group)}</p>` : ''}
+                                    ${ticket.group ? `<p style="margin: 0.35rem 0; color: ${colors.textSecondary}; font-size: 0.9rem;"><i class="fas fa-users" style="color: ${colors.textMuted}; margin-right: 0.5rem;"></i>Grup: ${escapeHtmlForPopup(ticket.group)}</p>` : ''}
                                 </div>
                                 <div style="text-align: right;">
-                                    <span style="display: inline-block; padding: 0.4rem 0.9rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; background: linear-gradient(135deg, ${getTicketTypeGradient(ticket.tip_bilet)}); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                    <span style="display: inline-block; padding: 0.4rem 0.9rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; background: linear-gradient(135deg, ${getTicketTypeGradient(ticket.tip_bilet)}); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
                                         ${escapeHtmlForPopup(ticket.tip_bilet)}
                                     </span>
                                     <div style="margin-top: 0.75rem;">
