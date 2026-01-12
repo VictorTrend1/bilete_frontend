@@ -1739,64 +1739,67 @@ function showTicketSelectionPopup(tickets) {
     // Get current theme
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     
-    // Theme-aware colors
+    // Theme-aware colors - softer palette
     const colors = {
-        modalBg: isDark ? '#1e293b' : '#ffffff',
-        textPrimary: isDark ? '#f1f5f9' : '#1e293b',
-        textSecondary: isDark ? '#94a3b8' : '#475569',
-        textMuted: isDark ? '#64748b' : '#94a3b8',
-        borderColor: isDark ? 'rgba(255,255,255,0.1)' : '#e2e8f0',
-        borderVerified: isDark ? 'rgba(16, 185, 129, 0.4)' : 'rgba(16, 185, 129, 0.5)',
-        bgHover: isDark ? 'rgba(255,255,255,0.03)' : '#f8fafc',
-        bgVerified: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
-        overlay: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(0,0,0,0.5)'
+        modalBg: isDark ? '#252545' : '#ffffff',
+        textPrimary: isDark ? '#e8e8f0' : '#212121',
+        textSecondary: isDark ? '#b8b8c8' : '#616161',
+        textMuted: isDark ? '#888898' : '#9e9e9e',
+        borderColor: isDark ? '#3a3a5a' : '#e0e0e0',
+        borderVerified: isDark ? 'rgba(129, 199, 132, 0.4)' : 'rgba(102, 187, 106, 0.5)',
+        bgVerified: isDark ? 'rgba(129, 199, 132, 0.1)' : 'rgba(102, 187, 106, 0.08)',
+        overlay: isDark ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.4)',
+        primary: isDark ? '#7c8fd4' : '#5c6bc0',
+        success: isDark ? '#81c784' : '#66bb6a',
+        warning: isDark ? '#ffb74d' : '#ffa726',
+        danger: isDark ? '#e57373' : '#ef5350'
     };
 
     const popupHTML = `
-        <div id="ticket-selection-popup" class="modal" style="display: block; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: ${colors.overlay}; backdrop-filter: blur(4px);">
-            <div class="modal-content" style="background: ${colors.modalBg}; margin: 4% auto; padding: 2rem; border: 1px solid ${colors.borderColor}; border-radius: 20px; width: 92%; max-width: 720px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.3);">
-                <span class="close" onclick="closeTicketSelectionPopup()" style="color: ${colors.textMuted}; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; transition: color 0.3s;">&times;</span>
-                <h3 style="margin-top: 0; color: ${colors.textPrimary}; font-size: 1.4rem; font-weight: 700; padding-bottom: 1rem; border-bottom: 1px solid ${colors.borderColor};">
-                    <i class="fas fa-list-ul" style="color: #f59e0b; margin-right: 0.5rem;"></i>
+        <div id="ticket-selection-popup" class="modal" style="display: block; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: ${colors.overlay};">
+            <div class="modal-content" style="background: ${colors.modalBg}; margin: 5% auto; padding: 1.75rem; border: 1px solid ${colors.borderColor}; border-radius: 14px; width: 92%; max-width: 680px; max-height: 85vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.2);">
+                <span class="close" onclick="closeTicketSelectionPopup()" style="color: ${colors.textMuted}; float: right; font-size: 24px; font-weight: bold; cursor: pointer; line-height: 1;">&times;</span>
+                <h3 style="margin-top: 0; color: ${colors.textPrimary}; font-size: 1.25rem; font-weight: 600; padding-bottom: 0.9rem; border-bottom: 1px solid ${colors.borderColor};">
+                    <i class="fas fa-list-ul" style="color: ${colors.warning}; margin-right: 0.5rem;"></i>
                     ${tickets.length} bilete găsite
                 </h3>
-                <p style="color: ${colors.textSecondary}; margin: 1rem 0 1.5rem 0; font-size: 0.95rem;">Selectează biletul pe care dorești să îl verifici:</p>
-                <div class="tickets-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <p style="color: ${colors.textSecondary}; margin: 0.9rem 0 1.25rem 0; font-size: 0.9rem;">Selectează biletul pe care dorești să îl verifici:</p>
+                <div class="tickets-list" style="display: flex; flex-direction: column; gap: 0.65rem;">
                     ${tickets.map((ticket, index) => `
-                        <div class="ticket-option" style="border: 2px solid ${ticket.verified ? colors.borderVerified : colors.borderColor}; border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.25s ease; background: ${ticket.verified ? colors.bgVerified : 'transparent'};"
-                             onmouseover="this.style.borderColor='#6366f1'; this.style.boxShadow='0 4px 16px rgba(99, 102, 241, 0.2)'; this.style.transform='translateY(-2px)';"
-                             onmouseout="this.style.borderColor='${ticket.verified ? colors.borderVerified : colors.borderColor}'; this.style.boxShadow='none'; this.style.transform='translateY(0)';"
+                        <div class="ticket-option" style="border: 1px solid ${ticket.verified ? colors.borderVerified : colors.borderColor}; border-radius: 10px; padding: 1.1rem; cursor: pointer; transition: all 0.2s ease; background: ${ticket.verified ? colors.bgVerified : 'transparent'};"
+                             onmouseover="this.style.borderColor='${colors.primary}'; this.style.boxShadow='0 2px 12px rgba(92, 107, 192, 0.15)';"
+                             onmouseout="this.style.borderColor='${ticket.verified ? colors.borderVerified : colors.borderColor}'; this.style.boxShadow='none';"
                              onclick="verifySelectedTicket('${ticket.id}')">
-                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
-                                <div style="flex: 1; min-width: 200px;">
-                                    <h4 style="margin: 0 0 0.5rem 0; color: ${colors.textPrimary}; font-size: 1.1rem; font-weight: 600;">
-                                        <i class="fas fa-user" style="color: #6366f1; margin-right: 0.5rem;"></i>${escapeHtmlForPopup(ticket.nume)}
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 0.9rem;">
+                                <div style="flex: 1; min-width: 180px;">
+                                    <h4 style="margin: 0 0 0.4rem 0; color: ${colors.textPrimary}; font-size: 1rem; font-weight: 600;">
+                                        <i class="fas fa-user" style="color: ${colors.primary}; margin-right: 0.4rem;"></i>${escapeHtmlForPopup(ticket.nume)}
                                     </h4>
-                                    <p style="margin: 0.35rem 0; color: ${colors.textSecondary}; font-size: 0.9rem;">
-                                        <i class="fas fa-phone" style="color: ${colors.textMuted}; margin-right: 0.5rem;"></i>${escapeHtmlForPopup(ticket.telefon)}
+                                    <p style="margin: 0.3rem 0; color: ${colors.textSecondary}; font-size: 0.85rem;">
+                                        <i class="fas fa-phone" style="color: ${colors.textMuted}; margin-right: 0.4rem;"></i>${escapeHtmlForPopup(ticket.telefon)}
                                     </p>
-                                    <p style="margin: 0.35rem 0; color: ${colors.textSecondary}; font-size: 0.9rem;">
-                                        <i class="fas fa-calendar" style="color: ${colors.textMuted}; margin-right: 0.5rem;"></i>${new Date(ticket.created_at).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    <p style="margin: 0.3rem 0; color: ${colors.textSecondary}; font-size: 0.85rem;">
+                                        <i class="fas fa-calendar" style="color: ${colors.textMuted}; margin-right: 0.4rem;"></i>${new Date(ticket.created_at).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                     </p>
-                                    ${ticket.group ? `<p style="margin: 0.35rem 0; color: ${colors.textSecondary}; font-size: 0.9rem;"><i class="fas fa-users" style="color: ${colors.textMuted}; margin-right: 0.5rem;"></i>Grup: ${escapeHtmlForPopup(ticket.group)}</p>` : ''}
+                                    ${ticket.group ? `<p style="margin: 0.3rem 0; color: ${colors.textSecondary}; font-size: 0.85rem;"><i class="fas fa-users" style="color: ${colors.textMuted}; margin-right: 0.4rem;"></i>Grup: ${escapeHtmlForPopup(ticket.group)}</p>` : ''}
                                 </div>
                                 <div style="text-align: right;">
-                                    <span style="display: inline-block; padding: 0.4rem 0.9rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; background: linear-gradient(135deg, ${getTicketTypeGradient(ticket.tip_bilet)}); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+                                    <span style="display: inline-block; padding: 0.35rem 0.75rem; border-radius: 12px; font-weight: 600; font-size: 0.75rem; background: ${colors.primary}; color: white;">
                                         ${escapeHtmlForPopup(ticket.tip_bilet)}
                                     </span>
-                                    <div style="margin-top: 0.75rem;">
+                                    <div style="margin-top: 0.6rem;">
                                         ${ticket.verified 
-                                            ? '<span style="color: #10b981; font-weight: 600; font-size: 0.9rem;"><i class="fas fa-check-circle"></i> Verificat</span>' 
-                                            : '<span style="color: #f59e0b; font-weight: 600; font-size: 0.9rem;"><i class="fas fa-clock"></i> Neverificat</span>'}
+                                            ? `<span style="color: ${colors.success}; font-weight: 600; font-size: 0.85rem;"><i class="fas fa-check-circle"></i> Verificat</span>` 
+                                            : `<span style="color: ${colors.warning}; font-weight: 600; font-size: 0.85rem;"><i class="fas fa-clock"></i> Neverificat</span>`}
                                     </div>
-                                    ${ticket.verification_count > 0 ? `<div style="margin-top: 0.35rem; font-size: 0.8rem; color: #ef4444;"><i class="fas fa-eye"></i> Verificări: ${ticket.verification_count}</div>` : ''}
+                                    ${ticket.verification_count > 0 ? `<div style="margin-top: 0.3rem; font-size: 0.75rem; color: ${colors.danger};"><i class="fas fa-eye"></i> Verificări: ${ticket.verification_count}</div>` : ''}
                                 </div>
                             </div>
                         </div>
                     `).join('')}
                 </div>
-                <div style="margin-top: 1.5rem; text-align: center;">
-                    <button onclick="closeTicketSelectionPopup()" class="btn btn-secondary" style="padding: 0.75rem 2rem;">
+                <div style="margin-top: 1.25rem; text-align: center;">
+                    <button onclick="closeTicketSelectionPopup()" class="btn btn-secondary" style="padding: 0.6rem 1.5rem;">
                         <i class="fas fa-times"></i> Anulează
                     </button>
                 </div>
