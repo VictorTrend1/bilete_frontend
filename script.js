@@ -414,8 +414,9 @@ async function verifyTicketFromButton(el) {
             showSuccess(`✅ Bilet verificat cu succes! (${ticketData.nume} - ${ticketData.tip_bilet})`);
         }
         
-        // Reapply filters to update display
-        applyFilters();
+        // Update display
+        displayTicketsTable();
+        updatePagination();
         
     } catch (error) {
         console.error('Error verifying ticket:', error);
@@ -591,28 +592,41 @@ async function copyImageToClipboard(imageUrl) {
 
 // Phone number utilities
 function formatRomanianPhoneNumber(phoneNumber) {
-    // Remove all non-digit characters
-    let cleaned = phoneNumber.replace(/\D/g, '');
+    if (!phoneNumber) return '';
+    
+    // Remove all non-digit characters except +
+    let cleaned = phoneNumber.replace(/[^\d+]/g, '');
+    
+    // If it already has +40, return as is
+    if (cleaned.startsWith('+40')) {
+        return cleaned;
+    }
+    
+    // Remove + if present but not +40
+    cleaned = cleaned.replace(/^\+/, '');
     
     // Handle different formats
-    if (cleaned.startsWith('0')) {
+    if (cleaned.startsWith('0') && cleaned.length === 10) {
         // Local format: 0712345678 -> +40712345678
         return '+40' + cleaned.substring(1);
-    } else if (cleaned.startsWith('40')) {
+    } else if (cleaned.startsWith('40') && cleaned.length === 11) {
         // National format: 40712345678 -> +40712345678
         return '+' + cleaned;
-    } else if (cleaned.startsWith('+40')) {
-        // Already formatted
-        return cleaned;
     } else if (cleaned.length === 9) {
-        // Assume local format without 0
+        // Assume local format without 0: 712345678 -> +40712345678
         return '+40' + cleaned;
     } else if (cleaned.length === 10 && cleaned.startsWith('0')) {
-        // Local format with 0
+        // Local format with 0: 0712345678 -> +40712345678
         return '+40' + cleaned.substring(1);
     }
     
-    return phoneNumber; // Return original if can't format
+    // If we have 11 digits starting with 40, add +
+    if (cleaned.length === 11 && cleaned.startsWith('40')) {
+        return '+' + cleaned;
+    }
+    
+    // Return original if can't format
+    return phoneNumber;
 }
 
 function validateRomanianPhoneNumber(phoneNumber) {
@@ -1023,7 +1037,8 @@ async function markTicketAsSent(ticketId) {
             }
             
             // Refresh the display
-            applyFilters();
+            displayTicketsTable();
+            updatePagination();
             
             // Update tickets summary
             updateTicketsSummary();
@@ -1039,10 +1054,8 @@ async function markTicketAsSent(ticketId) {
 
 // Tickets table functions
 let allTickets = []; // Store all tickets
-let filteredTickets = []; // Store filtered tickets
 let currentPage = 1;
 let itemsPerPage = 50;
-let searchTimeout = null;
 
 async function loadTicketsTable() {
     try {
@@ -1075,8 +1088,9 @@ async function loadTicketsTable() {
         if (loadingDiv) loadingDiv.style.display = 'none';
         if (tableContainer) tableContainer.style.opacity = '1';
         
-        // Apply filters and display
-        applyFilters();
+        // Display tickets with pagination
+        displayTicketsTable();
+        updatePagination();
         
         // Update tickets summary
         updateTicketsSummary();
@@ -1087,38 +1101,6 @@ async function loadTicketsTable() {
             loadingDiv.innerHTML = `<p style="color: #dc3545;">Eroare la încărcarea biletelor: ${error.message}</p>`;
         }
     }
-}
-
-// Filter tickets based on search and filters
-function applyFilters() {
-    const searchTerm = document.getElementById('ticket-search')?.value.toLowerCase() || '';
-    const statusFilter = document.getElementById('status-filter')?.value || 'all';
-    const sentFilter = document.getElementById('sent-filter')?.value || 'all';
-    
-    filteredTickets = allTickets.filter(ticket => {
-        // Search filter
-        const matchesSearch = !searchTerm || 
-            ticket.nume.toLowerCase().includes(searchTerm) ||
-            ticket.telefon.toLowerCase().includes(searchTerm) ||
-            ticket.tip_bilet.toLowerCase().includes(searchTerm);
-        
-        // Status filter
-        const matchesStatus = statusFilter === 'all' ||
-            (statusFilter === 'verified' && ticket.verified) ||
-            (statusFilter === 'unverified' && !ticket.verified);
-        
-        // Sent filter
-        const matchesSent = sentFilter === 'all' ||
-            (sentFilter === 'sent' && ticket.sent) ||
-            (sentFilter === 'not-sent' && !ticket.sent);
-        
-        return matchesSearch && matchesStatus && matchesSent;
-    });
-    
-    // Reset to first page when filtering
-    currentPage = 1;
-    displayTicketsTable();
-    updatePagination();
 }
 
 // Update tickets summary display
@@ -1196,8 +1178,9 @@ async function updateTicketSentStatus(checkbox) {
             allTickets[ticketIndex].sent_at = sent ? new Date() : null;
         }
         
-        // Reapply filters to update display
-        applyFilters();
+        // Update display
+        displayTicketsTable();
+        updatePagination();
         
         // Update tickets summary
         updateTicketsSummary();
@@ -1219,9 +1202,9 @@ function displayTicketsTable() {
     // Calculate pagination
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const paginatedTickets = filteredTickets.slice(startIndex, endIndex);
+    const paginatedTickets = allTickets.slice(startIndex, endIndex);
 
-    if (filteredTickets.length === 0) {
+    if (allTickets.length === 0) {
         tableBody.innerHTML = '';
         if (noTickets) noTickets.style.display = 'block';
         return;
@@ -1274,14 +1257,14 @@ function displayTicketsTable() {
                 <button class="btn btn-secondary" data-id="${ticketId}" onclick="downloadTicketQRFromButton(this)">
                     <i class="fas fa-download"></i> Descarcă cod QR
                 </button>
-                <button class="btn btn-info" data-id="${ticketId}" onclick="verifyTicketFromButton(this)">
-                    <i class="fas fa-check-circle"></i> Verifică Bilet
-                </button>
                 <button class="btn btn-success" data-ticket='${ticketJson}' onclick="sendTicketViaBotEnhanced(this)">
                     <i class="fab fa-whatsapp"></i> Trimite prin WhatsApp
                 </button>
                 <button class="btn btn-danger" data-id="${ticketId}" onclick="deleteTicket(this)">
                     <i class="fas fa-trash"></i> Șterge
+                </button>
+                <button class="btn btn-info" data-id="${ticketId}" onclick="verifyTicketFromButton(this)">
+                    <i class="fas fa-check-circle"></i> Validare bilet
                 </button>
             </td>
         `;
@@ -1296,7 +1279,7 @@ function displayTicketsTable() {
 
 // Update pagination controls
 function updatePagination() {
-    const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
+    const totalPages = Math.ceil(allTickets.length / itemsPerPage);
     const paginationControls = document.getElementById('pagination-controls');
     const paginationInfo = document.getElementById('pagination-info-text');
     const prevBtn = document.getElementById('prev-page');
@@ -1305,7 +1288,13 @@ function updatePagination() {
     
     if (!paginationControls) return;
     
-    if (filteredTickets.length === 0) {
+    if (allTickets.length === 0) {
+        paginationControls.style.display = 'none';
+        return;
+    }
+    
+    // Only show pagination if there are more tickets than items per page
+    if (allTickets.length <= itemsPerPage) {
         paginationControls.style.display = 'none';
         return;
     }
@@ -1314,8 +1303,8 @@ function updatePagination() {
     
     // Update info text
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, filteredTickets.length);
-    paginationInfo.textContent = `Afișând ${startIndex + 1}-${endIndex} din ${filteredTickets.length} bilete`;
+    const endIndex = Math.min(startIndex + itemsPerPage, allTickets.length);
+    paginationInfo.textContent = `Afișând ${startIndex + 1}-${endIndex} din ${allTickets.length} bilete`;
     
     // Update buttons
     prevBtn.disabled = currentPage === 1;
@@ -1435,8 +1424,9 @@ async function deleteTicket(el) {
         // Remove ticket from allTickets array
         allTickets = allTickets.filter(t => (t._id || t.id) !== ticketId);
         
-        // Reapply filters to update display
-        applyFilters();
+        // Update display
+        displayTicketsTable();
+        updatePagination();
         
         // Update tickets summary
         updateTicketsSummary();
@@ -1586,10 +1576,15 @@ async function verifyTicketByPhone(phoneNumber) {
     const resultDiv = document.getElementById('verification-result');
     
     try {
-        console.log('Verifying ticket with phone number:', phoneNumber);
+        console.log('Verifying ticket with phone number (original):', phoneNumber);
+        
+        if (!phoneNumber || !phoneNumber.trim()) {
+            throw new Error('Te rugăm să introduci un număr de telefon');
+        }
         
         // Format phone number
-        const formattedPhone = formatRomanianPhoneNumber(phoneNumber);
+        const formattedPhone = formatRomanianPhoneNumber(phoneNumber.trim());
+        console.log('Formatted phone number:', formattedPhone);
         
         // Validate phone number
         if (!validateRomanianPhoneNumber(formattedPhone)) {
@@ -1617,10 +1612,17 @@ async function verifyTicketByPhone(phoneNumber) {
             body: JSON.stringify({ phoneNumber: formattedPhone }),
         });
 
-        const data = await response.json();
+        // Check if response is ok before parsing JSON
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            console.error('Error parsing JSON response:', jsonError);
+            throw new Error('Răspuns invalid de la server. Te rugăm să încerci din nou.');
+        }
 
         if (!response.ok) {
-            throw new Error(data.error || 'Verification failed');
+            throw new Error(data.error || 'Verificare eșuată');
         }
 
         console.log('Ticket verification by phone successful:', data);
@@ -2068,27 +2070,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loadTicketsTable();
         updateWhatsAppStatus();
         
-        // Setup search with debouncing
-        const searchInput = document.getElementById('ticket-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    applyFilters();
-                }, 300); // Debounce 300ms
-            });
-        }
-        
-        // Setup filter change handlers
-        const statusFilter = document.getElementById('status-filter');
-        const sentFilter = document.getElementById('sent-filter');
-        if (statusFilter) {
-            statusFilter.addEventListener('change', applyFilters);
-        }
-        if (sentFilter) {
-            sentFilter.addEventListener('change', applyFilters);
-        }
-        
         // Setup pagination controls
         const prevBtn = document.getElementById('prev-page');
         const nextBtn = document.getElementById('next-page');
@@ -2107,7 +2088,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (nextBtn) {
             nextBtn.addEventListener('click', () => {
-                const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
+                const totalPages = Math.ceil(allTickets.length / itemsPerPage);
                 if (currentPage < totalPages) {
                     currentPage++;
                     displayTicketsTable();
