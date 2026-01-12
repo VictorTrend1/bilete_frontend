@@ -180,6 +180,14 @@ body {
     border-color: var(--primary-color);
 }
 
+[data-theme="dark"] .nav-link {
+    color: #ffffff;
+}
+
+[data-theme="dark"] .nav-link:hover {
+    color: var(--primary-color);
+}
+
 .theme-toggle {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
