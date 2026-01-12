@@ -118,6 +118,22 @@
                     </form>
                 </div>
 
+                <div class="phone-verify-section" style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid #e0e0e0;">
+                    <h3>Sau verifică prin număr de telefon:</h3>
+                    <form id="phone-verify-form">
+                        <div class="form-group">
+                            <label for="phone-number">Număr de telefon:</label>
+                            <input type="text" id="phone-number" name="phone-number" placeholder="+40712345678 sau 0712345678" 
+                                   oninput="validatePhoneInput(this)" 
+                                   onblur="autoCompletePhoneNumber(this)">
+                            <small class="form-text text-muted">Acceptă formatul +40 sau 07...</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-phone"></i> Verifică prin Telefon
+                        </button>
+                    </form>
+                </div>
+
                 <div id="verification-result" class="verification-result" style="display: none;">
                     <!-- Verification results will be shown here -->
                 </div>

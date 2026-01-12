@@ -337,6 +337,89 @@ async function downloadTicketQRFromButton(el) {
     }
 }
 
+// Verify ticket from button click
+async function verifyTicketFromButton(el) {
+    const id = el.getAttribute('data-id');
+    if (!id) return;
+    
+    try {
+        const token = getToken();
+        if (!token) {
+            showError('Nu ești autentificat. Te rugăm să te conectezi din nou.');
+            return;
+        }
+        
+        // Show loading state
+        const button = el;
+        const originalHTML = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Se verifică...';
+        
+        // Get ticket data
+        const ticketResponse = await fetch(`${API_BASE_URL}/tickets/${id}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!ticketResponse.ok) {
+            const errorData = await ticketResponse.json();
+            throw new Error(errorData.error || 'Nu am putut încărca datele biletului');
+        }
+        
+        const ticketData = await ticketResponse.json();
+        
+        // Try to use QR code data if available, otherwise use phone number
+        let verifyResponse;
+        if (ticketData.qr_code) {
+            // Use QR code data for precise verification
+            verifyResponse = await fetch(`${API_BASE_URL}/verify-ticket`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ qrData: ticketData.qr_code }),
+            });
+        } else {
+            // Fallback to phone number verification
+            const phoneNumber = formatRomanianPhoneNumber(ticketData.telefon);
+            verifyResponse = await fetch(`${API_BASE_URL}/verify-ticket-by-phone`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ phoneNumber }),
+            });
+        }
+        
+        const verifyData = await verifyResponse.json();
+        
+        if (!verifyResponse.ok) {
+            throw new Error(verifyData.error || 'Verificare eșuată');
+        }
+        
+        // Show success message
+        if (verifyData.flagged) {
+            showError(`⚠️ ATENȚIE: ${verifyData.warning || 'Acest bilet a fost deja validat anterior!'} (Verificări: ${verifyData.verification_count})`);
+        } else {
+            showSuccess(`✅ Bilet verificat cu succes! (${ticketData.nume} - ${ticketData.tip_bilet})`);
+        }
+        
+        // Reload tickets to update status
+        loadTicketsTable();
+        
+    } catch (error) {
+        console.error('Error verifying ticket:', error);
+        showError('Eroare la verificarea biletului: ' + error.message);
+    } finally {
+        // Restore button state
+        const button = el;
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-check-circle"></i> Verifică Bilet';
+    }
+}
+
 function downloadDataUrl(dataUrl, filename) {
     const link = document.createElement('a');
     link.href = dataUrl;
@@ -1106,6 +1189,9 @@ function displayTicketsTable(tickets) {
                 <button class="btn btn-secondary" data-id="${ticket._id || ticket.id}" onclick="downloadTicketQRFromButton(this)">
                     <i class="fas fa-download"></i> Descarcă cod QR
                 </button>
+                <button class="btn btn-info" data-id="${ticket._id || ticket.id}" onclick="verifyTicketFromButton(this)">
+                    <i class="fas fa-check-circle"></i> Verifică Bilet
+                </button>
                 <button class="btn btn-success" data-ticket='${JSON.stringify(ticket).replace(/'/g, "&apos;")}' onclick="sendTicketViaBotEnhanced(this)">
                     <i class="fab fa-whatsapp"></i> Trimite prin WhatsApp
                 </button>
@@ -1342,6 +1428,56 @@ async function verifyTicket(qrData) {
         showVerificationResult(data.ticket, true, null, data);
     } catch (error) {
         console.error('Ticket verification failed:', error);
+        showVerificationResult(null, false, error.message);
+    }
+}
+
+// Verify ticket by phone number
+async function verifyTicketByPhone(phoneNumber) {
+    const resultDiv = document.getElementById('verification-result');
+    
+    try {
+        console.log('Verifying ticket with phone number:', phoneNumber);
+        
+        // Format phone number
+        const formattedPhone = formatRomanianPhoneNumber(phoneNumber);
+        
+        // Validate phone number
+        if (!validateRomanianPhoneNumber(formattedPhone)) {
+            throw new Error('Numărul de telefon nu este valid. Folosește formatul +40712345678 sau 0712345678');
+        }
+        
+        // Show loading state
+        if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'verification-result loading';
+            resultDiv.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #667eea; margin-bottom: 1rem;"></i>
+                    <h4>Se verifică biletul...</h4>
+                    <p>Te rugăm să aștepți</p>
+                </div>
+            `;
+        }
+        
+        const response = await fetch(`${API_BASE_URL}/verify-ticket-by-phone`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ phoneNumber: formattedPhone }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Verification failed');
+        }
+
+        console.log('Ticket verification by phone successful:', data);
+        showVerificationResult(data.ticket, true, null, data);
+    } catch (error) {
+        console.error('Ticket verification by phone failed:', error);
         showVerificationResult(null, false, error.message);
     }
 }
@@ -1702,6 +1838,22 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             await verifyTicket(qrData);
+        });
+    }
+
+    // Phone verification form
+    const phoneVerifyForm = document.getElementById('phone-verify-form');
+    if (phoneVerifyForm) {
+        phoneVerifyForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const phoneNumber = document.getElementById('phone-number').value;
+            if (!phoneNumber.trim()) {
+                showError('Introdu numărul de telefon');
+                return;
+            }
+
+            await verifyTicketByPhone(phoneNumber);
         });
     }
 
