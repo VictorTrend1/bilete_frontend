@@ -46,9 +46,43 @@
                 </div>
             </div>
 
+            <!-- Search and Filters -->
+            <div class="tickets-controls">
+                <div class="search-box">
+                    <input type="text" id="search-tickets" placeholder="Caută după nume sau telefon...">
+                </div>
+                <div class="filter-group">
+                    <label for="status-filter">Status:</label>
+                    <select id="status-filter">
+                        <option value="all">Toate</option>
+                        <option value="verified">Verificate</option>
+                        <option value="pending">Neverificate</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="sent-filter">Trimis:</label>
+                    <select id="sent-filter">
+                        <option value="all">Toate</option>
+                        <option value="sent">Trimise</option>
+                        <option value="not-sent">Netrimise</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="type-filter">Tip bilet:</label>
+                    <select id="type-filter">
+                        <option value="all">Toate</option>
+                        <option value="BAL + AFTER">BAL + AFTER</option>
+                        <option value="BAL">BAL</option>
+                        <option value="AFTER">AFTER</option>
+                        <option value="AFTER VIP">AFTER VIP</option>
+                        <option value="BAL + AFTER VIP">BAL + AFTER VIP</option>
+                    </select>
+                </div>
+            </div>
+
             <!-- Loading Indicator -->
-            <div id="tickets-loading" style="text-align: center; padding: 2rem; display: none;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #667eea;"></i>
+            <div id="tickets-loading" class="loading-spinner" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i>
                 <p>Se încarcă biletele...</p>
             </div>
 
@@ -74,11 +108,11 @@
             </div>
 
             <!-- Pagination Controls -->
-            <div id="pagination-controls" style="margin-top: 1rem; display: none; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <div class="pagination-info" style="color: #666;">
+            <div id="pagination-controls" style="display: none;">
+                <div class="pagination-info">
                     <span id="pagination-info-text">Afișând 0-0 din 0 bilete</span>
                 </div>
-                <div class="pagination-buttons" style="display: flex; gap: 0.5rem; align-items: center;">
+                <div class="pagination-buttons">
                     <button id="prev-page" class="btn btn-secondary" disabled>
                         <i class="fas fa-chevron-left"></i> Anterior
                     </button>
@@ -86,7 +120,7 @@
                     <button id="next-page" class="btn btn-secondary">
                         Următor <i class="fas fa-chevron-right"></i>
                     </button>
-                    <select id="items-per-page" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; margin-left: 0.5rem;">
+                    <select id="items-per-page">
                         <option value="50" selected>50 pe pagină</option>
                         <option value="100">100 pe pagină</option>
                         <option value="200">200 pe pagină</option>

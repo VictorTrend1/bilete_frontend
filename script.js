@@ -414,9 +414,8 @@ async function verifyTicketFromButton(el) {
             showSuccess(`✅ Bilet verificat cu succes! (${ticketData.nume} - ${ticketData.tip_bilet})`);
         }
         
-        // Update display
-        displayTicketsTable();
-        updatePagination();
+        // Update display using filters
+        applyFilters();
         
     } catch (error) {
         console.error('Error verifying ticket:', error);
@@ -425,7 +424,7 @@ async function verifyTicketFromButton(el) {
         // Restore button state
         const button = el;
         button.disabled = false;
-        button.innerHTML = '<i class="fas fa-check-circle"></i> Verifică Bilet';
+        button.innerHTML = '<i class="fas fa-check-circle"></i> Validare bilet';
     }
 }
 
@@ -1036,9 +1035,8 @@ async function markTicketAsSent(ticketId) {
                 }
             }
             
-            // Refresh the display
-            displayTicketsTable();
-            updatePagination();
+            // Refresh the display using filters
+            applyFilters();
             
             // Update tickets summary
             updateTicketsSummary();
@@ -1054,8 +1052,45 @@ async function markTicketAsSent(ticketId) {
 
 // Tickets table functions
 let allTickets = []; // Store all tickets
+let filteredTickets = []; // Store filtered tickets
 let currentPage = 1;
 let itemsPerPage = 50;
+
+// Filter function
+function applyFilters() {
+    const searchTerm = (document.getElementById('search-tickets')?.value || '').toLowerCase().trim();
+    const statusFilter = document.getElementById('status-filter')?.value || 'all';
+    const sentFilter = document.getElementById('sent-filter')?.value || 'all';
+    const typeFilter = document.getElementById('type-filter')?.value || 'all';
+    
+    filteredTickets = allTickets.filter(ticket => {
+        // Search filter
+        const matchesSearch = !searchTerm || 
+            ticket.nume.toLowerCase().includes(searchTerm) ||
+            ticket.telefon.toLowerCase().includes(searchTerm);
+        
+        // Status filter
+        const matchesStatus = statusFilter === 'all' ||
+            (statusFilter === 'verified' && ticket.verified) ||
+            (statusFilter === 'pending' && !ticket.verified);
+        
+        // Sent filter
+        const matchesSent = sentFilter === 'all' ||
+            (sentFilter === 'sent' && ticket.sent) ||
+            (sentFilter === 'not-sent' && !ticket.sent);
+        
+        // Type filter
+        const matchesType = typeFilter === 'all' || ticket.tip_bilet === typeFilter;
+        
+        return matchesSearch && matchesStatus && matchesSent && matchesType;
+    });
+    
+    // Reset to first page when filtering
+    currentPage = 1;
+    
+    displayTicketsTable();
+    updatePagination();
+}
 
 async function loadTicketsTable() {
     try {
@@ -1083,14 +1118,14 @@ async function loadTicketsTable() {
         }
 
         allTickets = data.tickets;
+        filteredTickets = [...allTickets]; // Initialize filtered tickets
         
         // Hide loading indicator
         if (loadingDiv) loadingDiv.style.display = 'none';
         if (tableContainer) tableContainer.style.opacity = '1';
         
-        // Display tickets with pagination
-        displayTicketsTable();
-        updatePagination();
+        // Apply filters and display tickets with pagination
+        applyFilters();
         
         // Update tickets summary
         updateTicketsSummary();
@@ -1178,9 +1213,8 @@ async function updateTicketSentStatus(checkbox) {
             allTickets[ticketIndex].sent_at = sent ? new Date() : null;
         }
         
-        // Update display
-        displayTicketsTable();
-        updatePagination();
+        // Update display using filters
+        applyFilters();
         
         // Update tickets summary
         updateTicketsSummary();
@@ -1199,12 +1233,12 @@ function displayTicketsTable() {
     
     if (!tableBody) return;
 
-    // Calculate pagination
+    // Calculate pagination using filteredTickets
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
-    const paginatedTickets = allTickets.slice(startIndex, endIndex);
+    const paginatedTickets = filteredTickets.slice(startIndex, endIndex);
 
-    if (allTickets.length === 0) {
+    if (filteredTickets.length === 0) {
         tableBody.innerHTML = '';
         if (noTickets) noTickets.style.display = 'block';
         return;
@@ -1279,7 +1313,7 @@ function displayTicketsTable() {
 
 // Update pagination controls
 function updatePagination() {
-    const totalPages = Math.ceil(allTickets.length / itemsPerPage);
+    const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
     const paginationControls = document.getElementById('pagination-controls');
     const paginationInfo = document.getElementById('pagination-info-text');
     const prevBtn = document.getElementById('prev-page');
@@ -1288,13 +1322,13 @@ function updatePagination() {
     
     if (!paginationControls) return;
     
-    if (allTickets.length === 0) {
+    if (filteredTickets.length === 0) {
         paginationControls.style.display = 'none';
         return;
     }
     
     // Only show pagination if there are more tickets than items per page
-    if (allTickets.length <= itemsPerPage) {
+    if (filteredTickets.length <= itemsPerPage) {
         paginationControls.style.display = 'none';
         return;
     }
@@ -1303,8 +1337,8 @@ function updatePagination() {
     
     // Update info text
     const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = Math.min(startIndex + itemsPerPage, allTickets.length);
-    paginationInfo.textContent = `Afișând ${startIndex + 1}-${endIndex} din ${allTickets.length} bilete`;
+    const endIndex = Math.min(startIndex + itemsPerPage, filteredTickets.length);
+    paginationInfo.textContent = `Afișând ${startIndex + 1}-${endIndex} din ${filteredTickets.length} bilete`;
     
     // Update buttons
     prevBtn.disabled = currentPage === 1;
@@ -1424,9 +1458,8 @@ async function deleteTicket(el) {
         // Remove ticket from allTickets array
         allTickets = allTickets.filter(t => (t._id || t.id) !== ticketId);
         
-        // Update display
-        displayTicketsTable();
-        updatePagination();
+        // Update display using filters
+        applyFilters();
         
         // Update tickets summary
         updateTicketsSummary();
@@ -1575,19 +1608,26 @@ async function verifyTicket(qrData) {
 async function verifyTicketByPhone(phoneNumber) {
     const resultDiv = document.getElementById('verification-result');
     
+    console.log('=== verifyTicketByPhone START ===');
+    console.log('Original phone number:', phoneNumber);
+    
     try {
-        console.log('Verifying ticket with phone number (original):', phoneNumber);
-        
         if (!phoneNumber || !phoneNumber.trim()) {
             throw new Error('Te rugăm să introduci un număr de telefon');
         }
         
+        const trimmedPhone = phoneNumber.trim();
+        console.log('Trimmed phone number:', trimmedPhone);
+        
         // Format phone number
-        const formattedPhone = formatRomanianPhoneNumber(phoneNumber.trim());
+        const formattedPhone = formatRomanianPhoneNumber(trimmedPhone);
         console.log('Formatted phone number:', formattedPhone);
         
         // Validate phone number
-        if (!validateRomanianPhoneNumber(formattedPhone)) {
+        const isValid = validateRomanianPhoneNumber(formattedPhone);
+        console.log('Is valid:', isValid);
+        
+        if (!isValid) {
             throw new Error('Numărul de telefon nu este valid. Folosește formatul +40712345678 sau 0712345678');
         }
         
@@ -1599,36 +1639,216 @@ async function verifyTicketByPhone(phoneNumber) {
                 <div style="text-align: center; padding: 2rem;">
                     <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #667eea; margin-bottom: 1rem;"></i>
                     <h4>Se verifică biletul...</h4>
-                    <p>Te rugăm să aștepți</p>
+                    <p>Număr: ${formattedPhone}</p>
                 </div>
             `;
         }
+        
+        const requestBody = { phoneNumber: formattedPhone };
+        console.log('Request URL:', `${API_BASE_URL}/verify-ticket-by-phone`);
+        console.log('Request body:', JSON.stringify(requestBody));
         
         const response = await fetch(`${API_BASE_URL}/verify-ticket-by-phone`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ phoneNumber: formattedPhone }),
+            body: JSON.stringify(requestBody),
         });
 
+        console.log('Response status:', response.status);
+        
         // Check if response is ok before parsing JSON
         let data;
         try {
-            data = await response.json();
+            const responseText = await response.text();
+            console.log('Response text:', responseText);
+            data = JSON.parse(responseText);
         } catch (jsonError) {
             console.error('Error parsing JSON response:', jsonError);
             throw new Error('Răspuns invalid de la server. Te rugăm să încerci din nou.');
         }
 
+        console.log('Response data:', data);
+
         if (!response.ok) {
             throw new Error(data.error || 'Verificare eșuată');
+        }
+
+        // Check if multiple tickets were found
+        if (data.multiple && data.tickets && data.tickets.length > 1) {
+            console.log('Multiple tickets found, showing selection popup');
+            showTicketSelectionPopup(data.tickets);
+            return;
         }
 
         console.log('Ticket verification by phone successful:', data);
         showVerificationResult(data.ticket, true, null, data);
     } catch (error) {
         console.error('Ticket verification by phone failed:', error);
+        console.error('Error stack:', error.stack);
+        showVerificationResult(null, false, error.message);
+    }
+    
+    console.log('=== verifyTicketByPhone END ===');
+}
+
+// Show popup to select which ticket to verify when multiple are found
+function showTicketSelectionPopup(tickets) {
+    // Remove existing popup if any
+    const existingPopup = document.getElementById('ticket-selection-popup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+
+    const popupHTML = `
+        <div id="ticket-selection-popup" class="modal" style="display: block; position: fixed; z-index: 10000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85); backdrop-filter: blur(8px);">
+            <div class="modal-content" style="background: rgba(26, 26, 46, 0.98); margin: 4% auto; padding: 2rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; width: 92%; max-width: 720px; max-height: 85vh; overflow-y: auto; box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 60px rgba(99, 102, 241, 0.15);">
+                <span class="close" onclick="closeTicketSelectionPopup()" style="color: #94a3b8; float: right; font-size: 28px; font-weight: bold; cursor: pointer; line-height: 1; transition: color 0.3s;">&times;</span>
+                <h3 style="margin-top: 0; background: linear-gradient(135deg, #6366f1, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.5rem; font-weight: 700; padding-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                    <i class="fas fa-list-ul" style="color: #f59e0b; -webkit-text-fill-color: #f59e0b;"></i> 
+                    ${tickets.length} bilete găsite
+                </h3>
+                <p style="color: #94a3b8; margin-bottom: 1.5rem; font-size: 0.95rem;">Selectează biletul pe care dorești să îl verifici:</p>
+                <div class="tickets-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    ${tickets.map((ticket, index) => `
+                        <div class="ticket-option" style="border: 2px solid ${ticket.verified ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255,255,255,0.08)'}; border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); background: ${ticket.verified ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.02)'};"
+                             onmouseover="this.style.borderColor='rgba(99, 102, 241, 0.5)'; this.style.boxShadow='0 4px 20px rgba(99, 102, 241, 0.2)'; this.style.transform='translateY(-2px)';"
+                             onmouseout="this.style.borderColor='${ticket.verified ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255,255,255,0.08)'}'; this.style.boxShadow='none'; this.style.transform='translateY(0)';"
+                             onclick="verifySelectedTicket('${ticket.id}')">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+                                <div style="flex: 1; min-width: 200px;">
+                                    <h4 style="margin: 0 0 0.5rem 0; color: #f1f5f9; font-size: 1.1rem; font-weight: 600;">
+                                        <i class="fas fa-user" style="color: #a5b4fc; margin-right: 0.5rem;"></i>${escapeHtmlForPopup(ticket.nume)}
+                                    </h4>
+                                    <p style="margin: 0.35rem 0; color: #94a3b8; font-size: 0.9rem;">
+                                        <i class="fas fa-phone" style="color: #64748b; margin-right: 0.5rem;"></i>${escapeHtmlForPopup(ticket.telefon)}
+                                    </p>
+                                    <p style="margin: 0.35rem 0; color: #94a3b8; font-size: 0.9rem;">
+                                        <i class="fas fa-calendar" style="color: #64748b; margin-right: 0.5rem;"></i>${new Date(ticket.created_at).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                    ${ticket.group ? `<p style="margin: 0.35rem 0; color: #94a3b8; font-size: 0.9rem;"><i class="fas fa-users" style="color: #64748b; margin-right: 0.5rem;"></i>Grup: ${escapeHtmlForPopup(ticket.group)}</p>` : ''}
+                                </div>
+                                <div style="text-align: right;">
+                                    <span style="display: inline-block; padding: 0.4rem 0.9rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem; background: linear-gradient(135deg, ${getTicketTypeGradient(ticket.tip_bilet)}); color: white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                                        ${escapeHtmlForPopup(ticket.tip_bilet)}
+                                    </span>
+                                    <div style="margin-top: 0.75rem;">
+                                        ${ticket.verified 
+                                            ? '<span style="color: #10b981; font-weight: 600; font-size: 0.9rem;"><i class="fas fa-check-circle"></i> Verificat</span>' 
+                                            : '<span style="color: #f59e0b; font-weight: 600; font-size: 0.9rem;"><i class="fas fa-clock"></i> Neverificat</span>'}
+                                    </div>
+                                    ${ticket.verification_count > 0 ? `<div style="margin-top: 0.35rem; font-size: 0.8rem; color: #ef4444;"><i class="fas fa-eye"></i> Verificări: ${ticket.verification_count}</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div style="margin-top: 1.5rem; text-align: center;">
+                    <button onclick="closeTicketSelectionPopup()" class="btn btn-secondary" style="padding: 0.75rem 2rem;">
+                        <i class="fas fa-times"></i> Anulează
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', popupHTML);
+
+    // Close on click outside
+    document.getElementById('ticket-selection-popup').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeTicketSelectionPopup();
+        }
+    });
+
+    // Close on Escape key
+    const escapeHandler = function(e) {
+        if (e.key === 'Escape') {
+            closeTicketSelectionPopup();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
+}
+
+// Helper function for escaping HTML in popup
+function escapeHtmlForPopup(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Get color for ticket type
+function getTicketTypeColor(tipBilet) {
+    const colors = {
+        'BAL + AFTER': '#6366f1',
+        'BAL + AFTER VIP': '#a855f7',
+        'BAL': '#0ea5e9',
+        'AFTER': '#10b981',
+        'AFTER VIP': '#f59e0b'
+    };
+    return colors[tipBilet] || '#64748b';
+}
+
+// Get gradient for ticket type (for dark theme popup)
+function getTicketTypeGradient(tipBilet) {
+    const gradients = {
+        'BAL + AFTER': '#6366f1, #8b5cf6',
+        'BAL + AFTER VIP': '#a855f7, #c026d3',
+        'BAL': '#0ea5e9, #06b6d4',
+        'AFTER': '#10b981, #059669',
+        'AFTER VIP': '#f59e0b, #d97706'
+    };
+    return gradients[tipBilet] || '#64748b, #475569';
+}
+
+// Close ticket selection popup
+function closeTicketSelectionPopup() {
+    const popup = document.getElementById('ticket-selection-popup');
+    if (popup) {
+        popup.remove();
+    }
+}
+
+// Verify a selected ticket by ID
+async function verifySelectedTicket(ticketId) {
+    const resultDiv = document.getElementById('verification-result');
+    
+    // Close the popup
+    closeTicketSelectionPopup();
+    
+    try {
+        // Show loading state
+        if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'verification-result loading';
+            resultDiv.innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #667eea; margin-bottom: 1rem;"></i>
+                    <h4>Se verifică biletul selectat...</h4>
+                </div>
+            `;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/verify-ticket-by-id/${ticketId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Verificare eșuată');
+        }
+
+        console.log('Selected ticket verification successful:', data);
+        showVerificationResult(data.ticket, true, null, data);
+    } catch (error) {
+        console.error('Selected ticket verification failed:', error);
         showVerificationResult(null, false, error.message);
     }
 }
@@ -2070,6 +2290,35 @@ document.addEventListener('DOMContentLoaded', function() {
         loadTicketsTable();
         updateWhatsAppStatus();
         
+        // Setup filter controls
+        const searchInput = document.getElementById('search-tickets');
+        const statusFilter = document.getElementById('status-filter');
+        const sentFilter = document.getElementById('sent-filter');
+        const typeFilter = document.getElementById('type-filter');
+        
+        if (searchInput) {
+            // Use debounce for search to improve performance
+            let searchTimeout;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    applyFilters();
+                }, 300);
+            });
+        }
+        
+        if (statusFilter) {
+            statusFilter.addEventListener('change', applyFilters);
+        }
+        
+        if (sentFilter) {
+            sentFilter.addEventListener('change', applyFilters);
+        }
+        
+        if (typeFilter) {
+            typeFilter.addEventListener('change', applyFilters);
+        }
+        
         // Setup pagination controls
         const prevBtn = document.getElementById('prev-page');
         const nextBtn = document.getElementById('next-page');
@@ -2088,7 +2337,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (nextBtn) {
             nextBtn.addEventListener('click', () => {
-                const totalPages = Math.ceil(allTickets.length / itemsPerPage);
+                const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
                 if (currentPage < totalPages) {
                     currentPage++;
                     displayTicketsTable();
@@ -2102,8 +2351,7 @@ document.addEventListener('DOMContentLoaded', function() {
             itemsPerPageSelect.addEventListener('change', (e) => {
                 itemsPerPage = parseInt(e.target.value);
                 currentPage = 1;
-                displayTicketsTable();
-                updatePagination();
+                applyFilters();
             });
         }
     }
