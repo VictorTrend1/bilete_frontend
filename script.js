@@ -399,6 +399,14 @@ async function verifyTicketFromButton(el) {
             throw new Error(verifyData.error || 'Verificare eșuată');
         }
         
+        // Update ticket in allTickets array
+        const ticketIndex = allTickets.findIndex(t => (t._id || t.id) === ticketData._id || ticketData.id);
+        if (ticketIndex !== -1) {
+            allTickets[ticketIndex].verified = verifyData.ticket.verified;
+            allTickets[ticketIndex].verification_count = verifyData.ticket.verification_count;
+            allTickets[ticketIndex].flagged = verifyData.flagged || false;
+        }
+        
         // Show success message
         if (verifyData.flagged) {
             showError(`⚠️ ATENȚIE: ${verifyData.warning || 'Acest bilet a fost deja validat anterior!'} (Verificări: ${verifyData.verification_count})`);
@@ -406,8 +414,8 @@ async function verifyTicketFromButton(el) {
             showSuccess(`✅ Bilet verificat cu succes! (${ticketData.nume} - ${ticketData.tip_bilet})`);
         }
         
-        // Reload tickets to update status
-        loadTicketsTable();
+        // Reapply filters to update display
+        applyFilters();
         
     } catch (error) {
         console.error('Error verifying ticket:', error);
@@ -1015,7 +1023,7 @@ async function markTicketAsSent(ticketId) {
             }
             
             // Refresh the display
-            displayTicketsTable(allTickets);
+            applyFilters();
             
             // Update tickets summary
             updateTicketsSummary();
@@ -1031,6 +1039,10 @@ async function markTicketAsSent(ticketId) {
 
 // Tickets table functions
 let allTickets = []; // Store all tickets
+let filteredTickets = []; // Store filtered tickets
+let currentPage = 1;
+let itemsPerPage = 50;
+let searchTimeout = null;
 
 async function loadTicketsTable() {
     try {
@@ -1038,6 +1050,12 @@ async function loadTicketsTable() {
         if (!token) {
             return;
         }
+
+        // Show loading indicator
+        const loadingDiv = document.getElementById('tickets-loading');
+        const tableContainer = document.querySelector('.tickets-table-container');
+        if (loadingDiv) loadingDiv.style.display = 'block';
+        if (tableContainer) tableContainer.style.opacity = '0.5';
 
         const response = await fetch(`${API_BASE_URL}/tickets`, {
             headers: {
@@ -1052,13 +1070,55 @@ async function loadTicketsTable() {
         }
 
         allTickets = data.tickets;
-        displayTicketsTable(allTickets);
+        
+        // Hide loading indicator
+        if (loadingDiv) loadingDiv.style.display = 'none';
+        if (tableContainer) tableContainer.style.opacity = '1';
+        
+        // Apply filters and display
+        applyFilters();
         
         // Update tickets summary
         updateTicketsSummary();
     } catch (error) {
         console.error('Error loading tickets:', error);
+        const loadingDiv = document.getElementById('tickets-loading');
+        if (loadingDiv) {
+            loadingDiv.innerHTML = `<p style="color: #dc3545;">Eroare la încărcarea biletelor: ${error.message}</p>`;
+        }
     }
+}
+
+// Filter tickets based on search and filters
+function applyFilters() {
+    const searchTerm = document.getElementById('ticket-search')?.value.toLowerCase() || '';
+    const statusFilter = document.getElementById('status-filter')?.value || 'all';
+    const sentFilter = document.getElementById('sent-filter')?.value || 'all';
+    
+    filteredTickets = allTickets.filter(ticket => {
+        // Search filter
+        const matchesSearch = !searchTerm || 
+            ticket.nume.toLowerCase().includes(searchTerm) ||
+            ticket.telefon.toLowerCase().includes(searchTerm) ||
+            ticket.tip_bilet.toLowerCase().includes(searchTerm);
+        
+        // Status filter
+        const matchesStatus = statusFilter === 'all' ||
+            (statusFilter === 'verified' && ticket.verified) ||
+            (statusFilter === 'unverified' && !ticket.verified);
+        
+        // Sent filter
+        const matchesSent = sentFilter === 'all' ||
+            (sentFilter === 'sent' && ticket.sent) ||
+            (sentFilter === 'not-sent' && !ticket.sent);
+        
+        return matchesSearch && matchesStatus && matchesSent;
+    });
+    
+    // Reset to first page when filtering
+    currentPage = 1;
+    displayTicketsTable();
+    updatePagination();
 }
 
 // Update tickets summary display
@@ -1136,6 +1196,9 @@ async function updateTicketSentStatus(checkbox) {
             allTickets[ticketIndex].sent_at = sent ? new Date() : null;
         }
         
+        // Reapply filters to update display
+        applyFilters();
+        
         // Update tickets summary
         updateTicketsSummary();
     } catch (error) {
@@ -1146,13 +1209,19 @@ async function updateTicketSentStatus(checkbox) {
     }
 }
 
-function displayTicketsTable(tickets) {
+// Optimized rendering using DocumentFragment
+function displayTicketsTable() {
     const tableBody = document.getElementById('tickets-table-body');
     const noTickets = document.getElementById('no-tickets');
     
     if (!tableBody) return;
 
-    if (tickets.length === 0) {
+    // Calculate pagination
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedTickets = filteredTickets.slice(startIndex, endIndex);
+
+    if (filteredTickets.length === 0) {
         tableBody.innerHTML = '';
         if (noTickets) noTickets.style.display = 'block';
         return;
@@ -1160,13 +1229,29 @@ function displayTicketsTable(tickets) {
 
     if (noTickets) noTickets.style.display = 'none';
 
-    tableBody.innerHTML = tickets.map((ticket, index) => `
-        <tr>
-            <td>${index + 1}</td>
-            <td>${ticket.nume}</td>
-            <td>${ticket.telefon}</td>
-            <td><span class="ticket-type">${ticket.tip_bilet}</span></td>
-            <td><span class="group-badge">${ticket.group || 'N/A'}</span></td>
+    // Use DocumentFragment for better performance
+    const fragment = document.createDocumentFragment();
+    
+    paginatedTickets.forEach((ticket, index) => {
+        const row = document.createElement('tr');
+        const globalIndex = startIndex + index;
+        
+        // Escape HTML to prevent XSS
+        const escapeHtml = (text) => {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        };
+        
+        const ticketId = ticket._id || ticket.id;
+        const ticketJson = JSON.stringify(ticket).replace(/'/g, "&apos;");
+        
+        row.innerHTML = `
+            <td>${globalIndex + 1}</td>
+            <td>${escapeHtml(ticket.nume)}</td>
+            <td>${escapeHtml(ticket.telefon)}</td>
+            <td><span class="ticket-type">${escapeHtml(ticket.tip_bilet)}</span></td>
+            <td><span class="group-badge">${escapeHtml(ticket.group || 'N/A')}</span></td>
             <td>${new Date(ticket.created_at).toLocaleDateString('ro-RO')}</td>
             <td class="${ticket.verified ? 'status-verified' : 'status-pending'}">
                 ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}
@@ -1175,7 +1260,7 @@ function displayTicketsTable(tickets) {
                 <label class="sent-checkbox-label">
                     <input type="checkbox" 
                            class="sent-checkbox" 
-                           data-ticket-id="${ticket._id || ticket.id}"
+                           data-ticket-id="${ticketId}"
                            ${ticket.sent ? 'checked' : ''}
                            onchange="updateTicketSentStatus(this)">
                     <span class="checkmark"></span>
@@ -1183,24 +1268,81 @@ function displayTicketsTable(tickets) {
                 </label>
             </td>
             <td class="actions">
-                <button class="btn btn-primary" data-id="${ticket._id || ticket.id}" onclick="viewTicketFromButton(this)">
+                <button class="btn btn-primary" data-id="${ticketId}" onclick="viewTicketFromButton(this)">
                     <i class="fas fa-eye"></i> Vezi biletul
                 </button>
-                <button class="btn btn-secondary" data-id="${ticket._id || ticket.id}" onclick="downloadTicketQRFromButton(this)">
+                <button class="btn btn-secondary" data-id="${ticketId}" onclick="downloadTicketQRFromButton(this)">
                     <i class="fas fa-download"></i> Descarcă cod QR
                 </button>
-                <button class="btn btn-info" data-id="${ticket._id || ticket.id}" onclick="verifyTicketFromButton(this)">
+                <button class="btn btn-info" data-id="${ticketId}" onclick="verifyTicketFromButton(this)">
                     <i class="fas fa-check-circle"></i> Verifică Bilet
                 </button>
-                <button class="btn btn-success" data-ticket='${JSON.stringify(ticket).replace(/'/g, "&apos;")}' onclick="sendTicketViaBotEnhanced(this)">
+                <button class="btn btn-success" data-ticket='${ticketJson}' onclick="sendTicketViaBotEnhanced(this)">
                     <i class="fab fa-whatsapp"></i> Trimite prin WhatsApp
                 </button>
-                <button class="btn btn-danger" data-id="${ticket._id || ticket.id}" onclick="deleteTicket(this)">
+                <button class="btn btn-danger" data-id="${ticketId}" onclick="deleteTicket(this)">
                     <i class="fas fa-trash"></i> Șterge
                 </button>
             </td>
-        </tr>
-    `).join('');
+        `;
+        
+        fragment.appendChild(row);
+    });
+    
+    // Clear and append in one operation
+    tableBody.innerHTML = '';
+    tableBody.appendChild(fragment);
+}
+
+// Update pagination controls
+function updatePagination() {
+    const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
+    const paginationControls = document.getElementById('pagination-controls');
+    const paginationInfo = document.getElementById('pagination-info-text');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    const pageNumbers = document.getElementById('page-numbers');
+    
+    if (!paginationControls) return;
+    
+    if (filteredTickets.length === 0) {
+        paginationControls.style.display = 'none';
+        return;
+    }
+    
+    paginationControls.style.display = 'flex';
+    
+    // Update info text
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = Math.min(startIndex + itemsPerPage, filteredTickets.length);
+    paginationInfo.textContent = `Afișând ${startIndex + 1}-${endIndex} din ${filteredTickets.length} bilete`;
+    
+    // Update buttons
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage >= totalPages;
+    
+    // Update page numbers
+    pageNumbers.innerHTML = '';
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const pageBtn = document.createElement('button');
+        pageBtn.className = `btn ${i === currentPage ? 'btn-primary' : 'btn-secondary'}`;
+        pageBtn.textContent = i;
+        pageBtn.onclick = () => {
+            currentPage = i;
+            displayTicketsTable();
+            updatePagination();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+        pageNumbers.appendChild(pageBtn);
+    }
 }
 
 async function sendTicketViaWhatsApp(el) {
@@ -1289,8 +1431,15 @@ async function deleteTicket(el) {
         }
         
         showSuccess('Bilet șters cu succes!');
-        // Reload the tickets table
-        loadTicketsTable();
+        
+        // Remove ticket from allTickets array
+        allTickets = allTickets.filter(t => (t._id || t.id) !== ticketId);
+        
+        // Reapply filters to update display
+        applyFilters();
+        
+        // Update tickets summary
+        updateTicketsSummary();
     } catch (error) {
         console.error('Error deleting ticket:', error);
         
@@ -1918,6 +2067,64 @@ document.addEventListener('DOMContentLoaded', function() {
     if (window.location.pathname.includes('bilete.html')) {
         loadTicketsTable();
         updateWhatsAppStatus();
+        
+        // Setup search with debouncing
+        const searchInput = document.getElementById('ticket-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    applyFilters();
+                }, 300); // Debounce 300ms
+            });
+        }
+        
+        // Setup filter change handlers
+        const statusFilter = document.getElementById('status-filter');
+        const sentFilter = document.getElementById('sent-filter');
+        if (statusFilter) {
+            statusFilter.addEventListener('change', applyFilters);
+        }
+        if (sentFilter) {
+            sentFilter.addEventListener('change', applyFilters);
+        }
+        
+        // Setup pagination controls
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+        const itemsPerPageSelect = document.getElementById('items-per-page');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayTicketsTable();
+                    updatePagination();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredTickets.length / itemsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayTicketsTable();
+                    updatePagination();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        }
+        
+        if (itemsPerPageSelect) {
+            itemsPerPageSelect.addEventListener('change', (e) => {
+                itemsPerPage = parseInt(e.target.value);
+                currentPage = 1;
+                displayTicketsTable();
+                updatePagination();
+            });
+        }
     }
 
     // Removed bot.html page loading - now integrated into bilete.html

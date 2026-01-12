@@ -13,10 +13,22 @@
         <div class="nav-container">
             <h1 class="nav-logo">🎫 Site Bilete</h1>
             <div class="nav-menu">
-                <a href="dashboard.html" class="nav-link">Dashboard</a>
-                <a href="bilete.html" class="nav-link active">Bilete</a>
-                <a href="verificare.html" class="nav-link">Verificare</a>
-                <button class="nav-link logout-btn" id="logout-btn">Deconectare</button>
+                <a href="dashboard.html" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="bilete.html" class="nav-link active">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Bilete</span>
+                </a>
+                <a href="verificare.html" class="nav-link">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Verificare</span>
+                </a>
+                <button class="logout-btn" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Deconectare</span>
+                </button>
             </div>
         </div>
     </nav>
@@ -32,6 +44,32 @@
                         <span>Se verifică statusul WhatsApp...</span>
                     </div>
                 </div>
+            </div>
+
+            <!-- Search and Filter Controls -->
+            <div class="tickets-controls" style="margin-bottom: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <div class="search-box" style="flex: 1; min-width: 250px;">
+                    <input type="text" id="ticket-search" class="form-control" placeholder="🔍 Caută după nume, telefon sau tip bilet..." 
+                           style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                <div class="filter-controls" style="display: flex; gap: 0.5rem;">
+                    <select id="status-filter" class="form-control" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="all">Toate statusurile</option>
+                        <option value="verified">Verificate</option>
+                        <option value="unverified">Neverificate</option>
+                    </select>
+                    <select id="sent-filter" class="form-control" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                        <option value="all">Toate</option>
+                        <option value="sent">Trimise</option>
+                        <option value="not-sent">Netrimise</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div id="tickets-loading" style="text-align: center; padding: 2rem; display: none;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: #667eea;"></i>
+                <p>Se încarcă biletele...</p>
             </div>
 
             <div class="tickets-table-container">
@@ -53,6 +91,28 @@
                         <!-- Tickets will be loaded here -->
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Pagination Controls -->
+            <div id="pagination-controls" style="margin-top: 1rem; display: none; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+                <div class="pagination-info" style="color: #666;">
+                    <span id="pagination-info-text">Afișând 0-0 din 0 bilete</span>
+                </div>
+                <div class="pagination-buttons" style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button id="prev-page" class="btn btn-secondary" disabled>
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </button>
+                    <span id="page-numbers" style="display: flex; gap: 0.25rem;"></span>
+                    <button id="next-page" class="btn btn-secondary">
+                        Următor <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <select id="items-per-page" style="padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; margin-left: 0.5rem;">
+                        <option value="25">25 pe pagină</option>
+                        <option value="50" selected>50 pe pagină</option>
+                        <option value="100">100 pe pagină</option>
+                        <option value="200">200 pe pagină</option>
+                    </select>
+                </div>
             </div>
 
             <div id="no-tickets" class="no-tickets" style="display: none;">
