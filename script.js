@@ -116,12 +116,21 @@ function updateNavigation() {
     const loginLink = document.getElementById('login-link');
     const registerLink = document.getElementById('register-link');
     const logoutBtn = document.getElementById('logout-btn');
+    const loguriLink = document.getElementById('loguri-link');
     
     if (isLoggedIn()) {
+        const user = getUser();
+        const isAdministrator = user && user.group === 'Administrator';
+        
         // Show authenticated navigation
         if (dashboardLink) dashboardLink.style.display = 'block';
         if (bileteLink) bileteLink.style.display = 'block';
         if (logoutBtn) logoutBtn.style.display = 'block';
+        
+        // Show Log-uri link only for Administrator users
+        if (loguriLink) {
+            loguriLink.style.display = isAdministrator ? 'block' : 'none';
+        }
         
         // Hide login/register links
         if (loginLink) loginLink.style.display = 'none';
@@ -131,6 +140,7 @@ function updateNavigation() {
         if (dashboardLink) dashboardLink.style.display = 'none';
         if (bileteLink) bileteLink.style.display = 'none';
         if (logoutBtn) logoutBtn.style.display = 'none';
+        if (loguriLink) loguriLink.style.display = 'none';
         
         // Show login/register links
         if (loginLink) loginLink.style.display = 'block';
@@ -2208,6 +2218,137 @@ async function stopScanner() {
     console.log('Scanner stopped successfully');
 }
 
+// ========================================
+// TICKET LOGS FUNCTIONS (for Administrator)
+// ========================================
+
+async function loadTicketLogs(group) {
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const errorMessage = document.getElementById('error-message');
+    const ticketsTableContainer = document.getElementById('tickets-table-container');
+    const ticketsTableBody = document.getElementById('tickets-table-body');
+    const noTicketsMessage = document.getElementById('no-tickets-message');
+    const groupInfo = document.getElementById('group-info');
+    const selectedGroupName = document.getElementById('selected-group-name');
+    const ticketsCount = document.getElementById('tickets-count');
+
+    try {
+        // Show loading
+        if (loadingIndicator) loadingIndicator.style.display = 'block';
+        if (errorMessage) errorMessage.style.display = 'none';
+        if (ticketsTableContainer) ticketsTableContainer.style.display = 'none';
+        if (noTicketsMessage) noTicketsMessage.style.display = 'none';
+
+        const token = getToken();
+        if (!token) {
+            throw new Error('Nu ești autentificat. Te rugăm să te conectezi.');
+        }
+
+        const response = await fetch(`${API_BASE_URL}/admin/tickets-logs/${encodeURIComponent(group)}`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.error || 'Eroare la încărcarea log-urilor');
+        }
+
+        // Hide loading
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+
+        // Update group info
+        if (groupInfo) {
+            groupInfo.style.display = 'block';
+            if (selectedGroupName) selectedGroupName.textContent = group;
+            if (ticketsCount) ticketsCount.textContent = data.count || 0;
+        }
+
+        // Display tickets
+        if (data.tickets && data.tickets.length > 0) {
+            displayTicketLogs(data.tickets);
+            if (ticketsTableContainer) ticketsTableContainer.style.display = 'block';
+            if (noTicketsMessage) noTicketsMessage.style.display = 'none';
+        } else {
+            if (ticketsTableContainer) ticketsTableContainer.style.display = 'none';
+            if (noTicketsMessage) noTicketsMessage.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading ticket logs:', error);
+        if (loadingIndicator) loadingIndicator.style.display = 'none';
+        if (errorMessage) {
+            errorMessage.textContent = error.message || 'Eroare la încărcarea log-urilor';
+            errorMessage.style.display = 'block';
+        }
+        if (ticketsTableContainer) ticketsTableContainer.style.display = 'none';
+        if (noTicketsMessage) noTicketsMessage.style.display = 'none';
+    }
+}
+
+function displayTicketLogs(tickets) {
+    const ticketsTableBody = document.getElementById('tickets-table-body');
+    if (!ticketsTableBody) return;
+
+    // Clear existing rows
+    ticketsTableBody.innerHTML = '';
+
+    // Create rows for each ticket
+    tickets.forEach(ticket => {
+        const row = document.createElement('tr');
+        
+        const createdDate = ticket.created_at 
+            ? new Date(ticket.created_at).toLocaleString('ro-RO', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+            : 'N/A';
+
+        const statusBadge = ticket.verified 
+            ? '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Verificat</span>'
+            : '<span class="badge badge-warning"><i class="fas fa-clock"></i> Ne verificat</span>';
+
+        row.innerHTML = `
+            <td>${escapeHtml(ticket.nume || 'N/A')}</td>
+            <td>${escapeHtml(ticket.telefon || 'N/A')}</td>
+            <td>${escapeHtml(ticket.tip_bilet || 'N/A')}</td>
+            <td><strong>${escapeHtml(ticket.creator_username || 'Unknown')}</strong></td>
+            <td>${createdDate}</td>
+            <td>${statusBadge}</td>
+            <td>${ticket.verification_count || 0}</td>
+        `;
+
+        ticketsTableBody.appendChild(row);
+    });
+}
+
+function hideLogsTable() {
+    const ticketsTableContainer = document.getElementById('tickets-table-container');
+    const noTicketsMessage = document.getElementById('no-tickets-message');
+    const groupInfo = document.getElementById('group-info');
+    const errorMessage = document.getElementById('error-message');
+    const loadingIndicator = document.getElementById('loading-indicator');
+
+    if (ticketsTableContainer) ticketsTableContainer.style.display = 'none';
+    if (noTicketsMessage) noTicketsMessage.style.display = 'none';
+    if (groupInfo) groupInfo.style.display = 'none';
+    if (errorMessage) errorMessage.style.display = 'none';
+    if (loadingIndicator) loadingIndicator.style.display = 'none';
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', function() {
     updateNavigation();
@@ -2341,6 +2482,32 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Load logs on loguri page
+    if (window.location.pathname.includes('loguri.html')) {
+        // Check if user is Administrator
+        const user = getUser();
+        if (!user || user.group !== 'Administrator') {
+            showError('Acces restricționat. Doar utilizatorii Administrator pot accesa această pagină.');
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+            return;
+        }
+
+        // Setup group selector
+        const groupSelect = document.getElementById('group-select');
+        if (groupSelect) {
+            groupSelect.addEventListener('change', async function(e) {
+                const selectedGroup = e.target.value;
+                if (selectedGroup) {
+                    await loadTicketLogs(selectedGroup);
+                } else {
+                    hideLogsTable();
+                }
+            });
+        }
+    }
+
     // Load tickets table on bilete page
     if (window.location.pathname.includes('bilete.html')) {
         loadTicketsTable();
@@ -2417,11 +2584,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update navigation based on authentication status
     updateNavigation();
     
-    // Redirect to login if not authenticated and trying to access dashboard or bilete
+    // Redirect to login if not authenticated and trying to access protected pages
     console.log('Page load - checking authentication for:', window.location.pathname);
-    if ((window.location.pathname.includes('dashboard.html') || window.location.pathname.includes('bilete.html')) && !isLoggedIn()) {
+    const protectedPages = ['dashboard.html', 'bilete.html', 'loguri.html'];
+    const isProtectedPage = protectedPages.some(page => window.location.pathname.includes(page));
+    
+    if (isProtectedPage && !isLoggedIn()) {
         console.log('Not authenticated, redirecting to login');
         window.location.href = 'login.html';
+    } else if (window.location.pathname.includes('loguri.html')) {
+        // Check if user is Administrator for loguri page
+        const user = getUser();
+        if (!user || user.group !== 'Administrator') {
+            console.log('Not Administrator, redirecting to dashboard');
+            showError('Acces restricționat. Doar utilizatorii Administrator pot accesa această pagină.');
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 2000);
+        }
     } else {
         console.log('Authentication check passed');
     }
