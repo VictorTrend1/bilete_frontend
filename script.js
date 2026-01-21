@@ -2480,6 +2480,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 userGroupDisplayElement.textContent = user.group;
             }
         }
+
+        // Service suspension banner close functionality
+        const banner = document.getElementById('service-suspension-banner');
+        const closeBtn = document.getElementById('banner-close-btn');
+        
+        if (banner && closeBtn) {
+            // Check if banner was previously closed
+            const bannerClosed = localStorage.getItem('serviceSuspensionBannerClosed');
+            if (bannerClosed === 'true') {
+                banner.classList.add('hidden');
+            }
+
+            // Handle close button click
+            closeBtn.addEventListener('click', function() {
+                banner.classList.add('hidden');
+                localStorage.setItem('serviceSuspensionBannerClosed', 'true');
+            });
+        }
     }
 
     // Load logs on loguri page
