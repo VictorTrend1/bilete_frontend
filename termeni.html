@@ -108,6 +108,88 @@
             transform: translateX(-5px);
         }
 
+        .print-actions {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e9ecef;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .print-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .print-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .print-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Selection styles - make text visible when selected */
+        .terms-content ::selection {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .terms-content ::-moz-selection {
+            background-color: #667eea;
+            color: white;
+        }
+
+        .terms-header h1::selection {
+            background-color: rgba(102, 126, 234, 0.3);
+            -webkit-text-fill-color: #667eea;
+            color: #667eea;
+        }
+
+        .terms-header h1::-moz-selection {
+            background-color: rgba(102, 126, 234, 0.3);
+            -webkit-text-fill-color: #667eea;
+            color: #667eea;
+        }
+
+        /* Dark theme selection */
+        [data-theme="dark"] .terms-content ::selection {
+            background-color: #764ba2;
+            color: white;
+        }
+
+        [data-theme="dark"] .terms-content ::-moz-selection {
+            background-color: #764ba2;
+            color: white;
+        }
+
+        @media print {
+            .navbar, .footer, .back-link, .print-actions {
+                display: none;
+            }
+            .terms-container {
+                box-shadow: none;
+                border: none;
+                padding: 0;
+                margin: 0;
+            }
+        }
+
         @media (max-width: 768px) {
             .terms-container {
                 padding: 1.5rem;
@@ -309,6 +391,12 @@
                 <h2>13. Modificarea Termenilor</h2>
                 <p>Platforma își rezervă dreptul de a modifica acești Termeni oricând, la discreția sa. Modificările vor fi comunicate prin publicarea versiunii actualizate pe Platformă. Continuarea utilizării Platformei după publicarea modificărilor reprezintă acordul necondiționat al utilizatorului cu noile versiuni ale Termenilor. Dacă utilizatorul nu este de acord cu modificările, trebuie să înceteze utilizarea Platformei imediat.</p>
           
+
+                <div class="print-actions">
+                    <button class="print-btn" onclick="window.print()">
+                        <i class="fas fa-print"></i> Imprimă / Salvează ca PDF
+                    </button>
+                </div>
 
                 <div class="back-link">
                     <a href="javascript:history.back()">
