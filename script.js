@@ -2498,6 +2498,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem('serviceSuspensionBannerClosed', 'true');
             });
         }
+
+        // Terms update banner close functionality
+        const termsBanner = document.getElementById('terms-update-banner');
+        const termsCloseBtn = document.getElementById('terms-banner-close-btn');
+        
+        if (termsBanner && termsCloseBtn) {
+            // Check if banner was previously closed
+            const termsBannerClosed = localStorage.getItem('termsUpdateBannerClosed');
+            if (termsBannerClosed === 'true') {
+                termsBanner.classList.add('hidden');
+            }
+
+            // Handle close button click
+            termsCloseBtn.addEventListener('click', function() {
+                termsBanner.classList.add('hidden');
+                localStorage.setItem('termsUpdateBannerClosed', 'true');
+            });
+        }
     }
 
     // Load logs on loguri page
