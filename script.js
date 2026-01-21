@@ -2481,21 +2481,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Service suspension banner close functionality
+        // Service suspension banner minimize functionality
         const banner = document.getElementById('service-suspension-banner');
         const closeBtn = document.getElementById('banner-close-btn');
         
         if (banner && closeBtn) {
-            // Check if banner was previously closed
-            const bannerClosed = localStorage.getItem('serviceSuspensionBannerClosed');
-            if (bannerClosed === 'true') {
-                banner.classList.add('hidden');
+            // Check if banner was previously minimized
+            const bannerMinimized = localStorage.getItem('serviceSuspensionBannerMinimized');
+            if (bannerMinimized === 'true') {
+                banner.classList.add('minimized');
+                closeBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
             }
 
-            // Handle close button click
+            // Handle close button click - toggle minimize
             closeBtn.addEventListener('click', function() {
-                banner.classList.add('hidden');
-                localStorage.setItem('serviceSuspensionBannerClosed', 'true');
+                const isMinimized = banner.classList.toggle('minimized');
+                
+                if (isMinimized) {
+                    closeBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+                    localStorage.setItem('serviceSuspensionBannerMinimized', 'true');
+                } else {
+                    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                    localStorage.setItem('serviceSuspensionBannerMinimized', 'false');
+                }
             });
         }
     }
