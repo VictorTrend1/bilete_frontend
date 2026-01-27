@@ -725,10 +725,15 @@ async function testInfobipAPI() {
 
 
 // Update WhatsApp status on bilete page
+let isUpdatingWhatsAppStatus = false;
 async function updateWhatsAppStatus() {
+    // Prevent multiple simultaneous calls
+    if (isUpdatingWhatsAppStatus) return;
+    
     const statusDiv = document.getElementById('whatsapp-status');
     if (!statusDiv) return;
 
+    isUpdatingWhatsAppStatus = true;
     try {
         const status = await checkMessagingStatus();
         if (status && status.success) {
@@ -758,6 +763,8 @@ async function updateWhatsAppStatus() {
                 <span>Eroare la verificarea statusului WhatsApp API</span>
             </div>
         `;
+    } finally {
+        isUpdatingWhatsAppStatus = false;
     }
 }
 
@@ -1633,17 +1640,32 @@ async function saveTicketType() {
     }
 }
 
-// Close modals when clicking outside of them
-window.onclick = function(event) {
-    const editModal = document.getElementById('edit-ticket-type-modal');
-    const qrModal = document.getElementById('qr-modal');
-    
-    if (event.target === editModal) {
-        closeEditTicketTypeModal();
-    }
-    if (event.target === qrModal) {
-        qrModal.style.display = 'none';
-    }
+// Close modals when clicking outside of them (single handler for all modals)
+if (!window.modalClickHandlerAdded) {
+    window.onclick = function(event) {
+        const editModal = document.getElementById('edit-ticket-type-modal');
+        const qrModal = document.getElementById('qr-modal');
+        const sendTicketModal = document.getElementById('send-ticket-modal');
+        const scheduleModal = document.getElementById('schedule-modal');
+        const scheduledMessagesModal = document.getElementById('scheduled-messages-modal');
+        
+        if (event.target === editModal) {
+            closeEditTicketTypeModal();
+        }
+        if (event.target === qrModal) {
+            qrModal.style.display = 'none';
+        }
+        if (event.target === sendTicketModal) {
+            sendTicketModal.style.display = 'none';
+        }
+        if (event.target === scheduleModal) {
+            scheduleModal.style.display = 'none';
+        }
+        if (event.target === scheduledMessagesModal) {
+            scheduledMessagesModal.style.display = 'none';
+        }
+    };
+    window.modalClickHandlerAdded = true;
 }
 
 function showQRModal(ticket) {
@@ -2577,14 +2599,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    if (modal) {
-        window.addEventListener('click', function(e) {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
-        });
-    }
-
 
     // Load user data on dashboard
     if (window.location.pathname.includes('dashboard.html')) {
@@ -3024,18 +3038,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Modal close handlers
-    const modals = ['send-ticket-modal', 'schedule-modal', 'scheduled-messages-modal'];
-    modals.forEach(modalId => {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            window.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
-        }
-    });
+    // Modal close handlers are now handled by the single window.onclick handler above
 });
 
 // Ticket Preview Functionality for verificare.html
