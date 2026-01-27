@@ -1336,6 +1336,9 @@ function displayTicketsTable() {
                 <button class="btn btn-secondary" data-id="${ticketId}" onclick="downloadTicketQRFromButton(this)">
                     <i class="fas fa-download"></i> Descarcă cod QR
                 </button>
+                <button class="btn btn-warning" data-id="${ticketId}" data-tip-bilet="${escapeHtml(ticket.tip_bilet)}" onclick="editTicketType(this)">
+                    <i class="fas fa-edit"></i> Editează tip bilet
+                </button>
                 <button class="btn btn-success" data-ticket='${ticketJson}' onclick="sendTicketViaBotEnhanced(this)">
                     <i class="fab fa-whatsapp"></i> Trimite prin WhatsApp
                 </button>
@@ -1519,6 +1522,127 @@ async function deleteTicket(el) {
         } else {
             showError(error.message);
         }
+    }
+}
+
+// Edit ticket type functionality
+let currentEditTicketId = null;
+
+function editTicketType(el) {
+    const ticketId = el.getAttribute('data-id');
+    const currentTipBilet = el.getAttribute('data-tip-bilet');
+    
+    if (!ticketId) return;
+    
+    currentEditTicketId = ticketId;
+    const modal = document.getElementById('edit-ticket-type-modal');
+    const select = document.getElementById('edit-ticket-type-select');
+    
+    // Set current value
+    select.value = currentTipBilet;
+    
+    // Show modal
+    modal.style.display = 'block';
+}
+
+function closeEditTicketTypeModal() {
+    const modal = document.getElementById('edit-ticket-type-modal');
+    modal.style.display = 'none';
+    currentEditTicketId = null;
+}
+
+async function saveTicketType() {
+    if (!currentEditTicketId) return;
+    
+    const select = document.getElementById('edit-ticket-type-select');
+    const newTipBilet = select.value;
+    
+    if (!newTipBilet) {
+        showError('Te rugăm să selectezi un tip de bilet.');
+        return;
+    }
+    
+    try {
+        const token = getToken();
+        if (!token) {
+            showError('Nu ești autentificat. Te rugăm să te conectezi din nou.');
+            return;
+        }
+
+        // Check if backend is healthy before making the request
+        const isHealthy = await checkBackendHealth();
+        if (!isHealthy) {
+            showError('Backend-ul nu este disponibil. Te rugăm să încerci din nou mai târziu.');
+            return;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/tickets/${currentEditTicketId}/type`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ tip_bilet: newTipBilet })
+        });
+        
+        // Check if response is HTML (error page) instead of JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Server-ul nu răspunde corect. Verifică că backend-ul rulează.');
+        }
+        
+        let data;
+        try {
+            data = await response.json();
+        } catch (jsonError) {
+            console.error('JSON parse error:', jsonError);
+            throw new Error('Server-ul a returnat un răspuns invalid. Verifică că backend-ul rulează corect.');
+        }
+        
+        if (!response.ok) {
+            throw new Error(data.error || `Eroare server: ${response.status}`);
+        }
+        
+        showSuccess('Tip bilet actualizat cu succes!');
+        
+        // Close modal
+        closeEditTicketTypeModal();
+        
+        // Update ticket in allTickets array
+        const ticketIndex = allTickets.findIndex(t => (t._id || t.id) === currentEditTicketId);
+        if (ticketIndex !== -1) {
+            allTickets[ticketIndex].tip_bilet = newTipBilet;
+        }
+        
+        // Update display using filters
+        applyFilters();
+        
+        // Update tickets summary
+        updateTicketsSummary();
+    } catch (error) {
+        console.error('Error updating ticket type:', error);
+        
+        // More specific error messages
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            showError('Nu s-a putut conecta la server. Verifică conexiunea la internet și că backend-ul rulează.');
+        } else if (error.message.includes('JSON')) {
+            showError('Server-ul nu răspunde corect. Verifică că backend-ul rulează și este accesibil.');
+        } else {
+            showError(error.message);
+        }
+    }
+}
+
+// Close modals when clicking outside of them
+window.onclick = function(event) {
+    const editModal = document.getElementById('edit-ticket-type-modal');
+    const qrModal = document.getElementById('qr-modal');
+    
+    if (event.target === editModal) {
+        closeEditTicketTypeModal();
+    }
+    if (event.target === qrModal) {
+        qrModal.style.display = 'none';
     }
 }
 
@@ -2443,13 +2567,13 @@ document.addEventListener('DOMContentLoaded', function() {
         logoutBtn.addEventListener('click', logout);
     }
 
-    // Modal close
-    const modal = document.getElementById('qr-modal');
-    const closeBtn = document.querySelector('.close');
+    // Modal close buttons
+    const qrModal = document.getElementById('qr-modal');
+    const qrCloseBtn = qrModal ? qrModal.querySelector('.close') : null;
     
-    if (closeBtn) {
-        closeBtn.addEventListener('click', function() {
-            if (modal) modal.style.display = 'none';
+    if (qrCloseBtn) {
+        qrCloseBtn.addEventListener('click', function() {
+            if (qrModal) qrModal.style.display = 'none';
         });
     }
 

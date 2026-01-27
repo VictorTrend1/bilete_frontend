@@ -157,6 +157,28 @@
         </div>
     </div>
 
+    <!-- Edit Ticket Type Modal -->
+    <div id="edit-ticket-type-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeEditTicketTypeModal()">&times;</span>
+            <h3>Editează Tip Bilet</h3>
+            <div class="modal-body">
+                <p>Selectează noul tip de bilet:</p>
+                <select id="edit-ticket-type-select" class="form-select">
+                    <option value="BAL + AFTER">BAL + AFTER</option>
+                    <option value="BAL">BAL</option>
+                    <option value="AFTER">AFTER</option>
+                    <option value="AFTER VIP">AFTER VIP</option>
+                    <option value="BAL + AFTER VIP">BAL + AFTER VIP</option>
+                </select>
+            </div>
+            <div class="modal-footer" style="margin-top: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+                <button class="btn btn-secondary" onclick="closeEditTicketTypeModal()">Anulează</button>
+                <button class="btn btn-primary" onclick="saveTicketType()">Salvează</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="footer">
         <p>&copy; 2025 Site Bilete. Toate drepturile rezervate.</p>
         <p><a href="termeni.html" style="color: rgba(255, 255, 255, 0.9); text-decoration: none;">Termeni și Condiții</a></p>
