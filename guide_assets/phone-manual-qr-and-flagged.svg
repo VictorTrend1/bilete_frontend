@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="560" viewBox="0 0 1400 560" role="img" aria-label="Introducere manuală QR și caz bilet suspect (mock screenshots)">
+  <defs>
+    <style>
+      .t { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; fill:#0f172a; }
+      .m { fill:#475569; font-size:14px; }
+      .h { font-weight:800; font-size:18px; }
+      .cap { font-weight:800; font-size:16px; }
+    </style>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="560" fill="url(#bg)"/>
+  <text x="30" y="48" class="t h">Introducere manuală QR + interpretare “Bilet suspect” (mock)</text>
+  <text x="30" y="74" class="t m">Util când camera nu merge sau QR-ul e deteriorat, dar ai textul (ex: dintr-un mesaj).</text>
+
+  <!-- phone 1: paste qr -->
+  <g transform="translate(40,120)" filter="url(#shadow)">
+    <rect x="0" y="0" width="380" height="400" rx="34" fill="#0f172a"/>
+    <rect x="12" y="12" width="356" height="376" rx="26" fill="#ffffff"/>
+    <rect x="88" y="22" width="204" height="20" rx="10" fill="#e2e8f0"/>
+    <text x="22" y="60" class="t cap">1) Lipește textul QR</text>
+    <rect x="28" y="90" width="324" height="190" rx="14" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="42" y="122" class="t m">{"id":"…","sig":"…"</text>
+    <text x="42" y="146" class="t m">,"group":"…","t":"…"</text>
+    <text x="42" y="170" class="t m">,"ts":"…"}  (exemplu)</text>
+    <text x="42" y="206" class="t m">Important: fără caractere lipsă.</text>
+    <rect x="28" y="296" width="324" height="44" rx="12" fill="#2563eb"/>
+    <text x="120" y="324" class="t" font-size="14" font-weight="800" fill="#ffffff">Verifică Bilet</text>
+    <rect x="28" y="354" width="324" height="22" rx="11" fill="#e2e8f0"/>
+  </g>
+
+  <!-- phone 2: invalid / parse error -->
+  <g transform="translate(510,120)" filter="url(#shadow)">
+    <rect x="0" y="0" width="380" height="400" rx="34" fill="#0f172a"/>
+    <rect x="12" y="12" width="356" height="376" rx="26" fill="#ffffff"/>
+    <rect x="88" y="22" width="204" height="20" rx="10" fill="#e2e8f0"/>
+    <text x="22" y="60" class="t cap">2) Dacă dă eroare</text>
+    <rect x="28" y="92" width="324" height="92" rx="14" fill="#fee2e2" stroke="#fecaca"/>
+    <text x="42" y="122" class="t" font-size="14" font-weight="800" fill="#991b1b">❌ Verificare Eșuată</text>
+    <text x="42" y="146" class="t m">Date QR invalide / incomplete</text>
+    <text x="42" y="168" class="t m">→ recopiază textul integral</text>
+
+    <rect x="28" y="200" width="324" height="176" rx="14" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="42" y="228" class="t" font-size="14" font-weight="800">Cele mai frecvente greșeli:</text>
+    <text x="42" y="252" class="t m">- lipsește o acoladă { }</text>
+    <text x="42" y="276" class="t m">- ai spații/caractere în plus</text>
+    <text x="42" y="300" class="t m">- textul e tăiat din WhatsApp/SMS</text>
+    <text x="42" y="324" class="t m">- ai copiat doar poza, nu textul</text>
+  </g>
+
+  <!-- phone 3: flagged -->
+  <g transform="translate(980,120)" filter="url(#shadow)">
+    <rect x="0" y="0" width="380" height="400" rx="34" fill="#0f172a"/>
+    <rect x="12" y="12" width="356" height="376" rx="26" fill="#ffffff"/>
+    <rect x="88" y="22" width="204" height="20" rx="10" fill="#e2e8f0"/>
+    <text x="22" y="60" class="t cap">3) “Bilet suspect”</text>
+
+    <rect x="28" y="92" width="324" height="132" rx="14" fill="#fee2e2" stroke="#fecaca"/>
+    <text x="42" y="122" class="t" font-size="14" font-weight="800" fill="#991b1b">🚨 ATENȚIE: BILET SUSPECT!</text>
+    <text x="42" y="146" class="t m">Acest bilet a fost verificat</text>
+    <text x="42" y="168" class="t m">anterior • Verificări: 2/3</text>
+    <text x="42" y="200" class="t m">Prima verificare: 20:14</text>
+
+    <rect x="28" y="240" width="324" height="136" rx="14" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="42" y="268" class="t" font-size="14" font-weight="800">Ce faci la intrare:</text>
+    <text x="42" y="292" class="t m">- oprești accesul (nu validezi)</text>
+    <text x="42" y="316" class="t m">- ceri act/confirmare</text>
+    <text x="42" y="340" class="t m">- chemi coordonator/admin</text>
+    <text x="42" y="364" class="t m">- notezi ora + tipul biletului</text>
+  </g>
+</svg>
+

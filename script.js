@@ -2583,6 +2583,16 @@ document.addEventListener('DOMContentLoaded', function() {
         stopScannerBtn.addEventListener('click', stopScanner);
     }
 
+    // Auto-start scanner on the dedicated mobile/tablet verification page
+    // (Triggers permission prompt faster; safe because startScanner() guards missing elements)
+    if (window.location.pathname.includes('verificare-mobile.html')) {
+        setTimeout(() => {
+            // If user already sees the page, attempt to start scanning immediately.
+            // If permission is denied, existing error handling will show a message.
+            startScanner();
+        }, 450);
+    }
+
     // Logout button
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {

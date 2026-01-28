@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="520" viewBox="0 0 1400 520" role="img" aria-label="Pași verificare bilete pe telefon (mock screenshots)">
+  <defs>
+    <style>
+      .t { font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif; fill:#0f172a; }
+      .m { fill:#475569; font-size:14px; }
+      .h { font-weight:700; font-size:18px; }
+      .cap { font-weight:700; font-size:16px; }
+      .chip { font-weight:700; font-size:12px; }
+    </style>
+    <linearGradient id="bg" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#ffffff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="1400" height="520" fill="url(#bg)"/>
+  <text x="30" y="48" class="t h">Interfață pe telefon — pași rapizi (mock)</text>
+  <text x="30" y="74" class="t m">Poți păstra imaginile astea în PDF sau le poți înlocui cu capturi reale din eveniment.</text>
+
+  <!-- phone 1 -->
+  <g transform="translate(40,110)" filter="url(#shadow)">
+    <rect x="0" y="0" width="380" height="380" rx="34" fill="#0f172a"/>
+    <rect x="12" y="12" width="356" height="356" rx="26" fill="#ffffff"/>
+    <rect x="88" y="22" width="204" height="20" rx="10" fill="#e2e8f0"/>
+    <text x="22" y="60" class="t cap">1) Pornește scanner</text>
+    <rect x="28" y="90" width="324" height="44" rx="12" fill="#2563eb"/>
+    <text x="86" y="118" class="t" font-size="14" font-weight="700" fill="#ffffff">Pornește Scanner</text>
+    <rect x="28" y="150" width="324" height="84" rx="14" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="42" y="178" class="t m">- deschide</text>
+    <text x="132" y="178" class="t" font-size="14" font-weight="700">verificare.html</text>
+    <text x="42" y="202" class="t m">- apasă butonul albastru</text>
+    <text x="42" y="226" class="t m">- acceptă accesul la cameră</text>
+    <rect x="28" y="254" width="324" height="94" rx="14" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="42" y="282" class="t m">Dacă nu apare camera:</text>
+    <text x="42" y="306" class="t m">- folosește HTTPS</text>
+    <text x="42" y="330" class="t m">- browser: Chrome / Edge</text>
+  </g>
+
+  <!-- phone 2 -->
+  <g transform="translate(510,110)" filter="url(#shadow)">
+    <rect x="0" y="0" width="380" height="380" rx="34" fill="#0f172a"/>
+    <rect x="12" y="12" width="356" height="356" rx="26" fill="#ffffff"/>
+    <rect x="88" y="22" width="204" height="20" rx="10" fill="#e2e8f0"/>
+    <text x="22" y="60" class="t cap">2) Țintește QR-ul</text>
+    <rect x="28" y="90" width="324" height="200" rx="16" fill="#0b1220"/>
+    <rect x="68" y="130" width="244" height="120" rx="12" fill="none" stroke="#22c55e" stroke-width="3" stroke-dasharray="8 8"/>
+    <text x="44" y="308" class="t m">Ține camera la 15–30cm, lumină bună.</text>
+    <rect x="28" y="326" width="324" height="44" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="44" y="354" class="t m">Dacă QR-ul nu se citește: mărește zoom / mișcă ușor.</text>
+  </g>
+
+  <!-- phone 3 -->
+  <g transform="translate(980,110)" filter="url(#shadow)">
+    <rect x="0" y="0" width="380" height="380" rx="34" fill="#0f172a"/>
+    <rect x="12" y="12" width="356" height="356" rx="26" fill="#ffffff"/>
+    <rect x="88" y="22" width="204" height="20" rx="10" fill="#e2e8f0"/>
+    <text x="22" y="60" class="t cap">3) Rezultat</text>
+
+    <rect x="28" y="92" width="324" height="62" rx="14" fill="#dcfce7" stroke="#bbf7d0"/>
+    <text x="42" y="120" class="t" font-size="14" font-weight="700" fill="#166534">✅ Bilet Verificat cu Succes!</text>
+    <text x="42" y="142" class="t m">Nume / Telefon / Tip bilet</text>
+
+    <rect x="28" y="168" width="324" height="92" rx="14" fill="#fee2e2" stroke="#fecaca"/>
+    <text x="42" y="196" class="t" font-size="14" font-weight="700" fill="#991b1b">🚨 BILET SUSPECT</text>
+    <text x="42" y="218" class="t m">A fost verificat anterior</text>
+    <text x="42" y="240" class="t m">→ oprește accesul și verifică</text>
+
+    <rect x="28" y="274" width="324" height="84" rx="14" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="42" y="302" class="t m">Dacă sunt mai multe bilete pe</text>
+    <text x="42" y="326" class="t m">același telefon → selectezi unul.</text>
+  </g>
+</svg>
+

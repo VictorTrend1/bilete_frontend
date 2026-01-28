@@ -11,6 +11,7 @@ frontend/
 ├── register.html       # Pagina de înregistrare
 ├── dashboard.html      # Dashboard utilizator
 ├── verificare.html     # Pagina de verificare bilete
+├── ghid-verificare-bilete.html # Ghid printabil (salvare PDF) pentru verificare
 ├── styles.css          # Stiluri CSS
 ├── script.js           # JavaScript principal
 └── README.md           # Acest fișier
@@ -48,6 +49,22 @@ Pagina de verificare pentru organizatori cu:
 - Scanner QR code live
 - Opțiune de introducere manuală a datelor
 - Afișare rezultate verificare
+
+### ghid-verificare-bilete.html
+Ghid “gata de print” despre cum se verifică biletele folosind `verificare.html`.
+
+**Cum îl transformi în PDF:**
+- Deschide `ghid-verificare-bilete.html` în browser
+- Apasă `Ctrl + P` → Destination: **Save as PDF**
+
+**Imagini (pentru ghid):**
+- Ghidul include o imagine tip “mock screenshot” în `guide_assets/phone-steps.svg`
+- Poți înlocui ușor cu capturi reale (PNG/JPG) păstrând același path în HTML
+
+**Assets suplimentare (tabletă/telefon):**
+- `guide_assets/tablet-layout-overview.svg` (overview pentru tabletă)
+- `guide_assets/phone-verify-by-phone.svg` (verificare prin telefon + selecție bilete multiple)
+- `guide_assets/phone-manual-qr-and-flagged.svg` (manual QR + “bilet suspect”)
 
 ## Funcționalități JavaScript
 

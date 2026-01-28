@@ -850,6 +850,75 @@ body {
     overflow: hidden;
 }
 
+/* ========================================
+   VERIFICATION MOBILE/TABLET PAGE
+   ======================================== */
+
+body.verification-mobile .verification-container {
+    max-width: 860px;
+}
+
+body.verification-mobile .verification-card {
+    text-align: left;
+}
+
+body.verification-mobile .verification-card h2 {
+    text-align: center;
+    font-size: 1.75rem;
+}
+
+body.verification-mobile .verification-card > p {
+    text-align: center;
+    font-size: 1rem;
+}
+
+body.verification-mobile .scanner-controls .btn {
+    min-width: 160px;
+}
+
+body.verification-mobile .scanner-container {
+    padding: 0.75rem;
+}
+
+body.verification-mobile #qr-reader {
+    max-width: none;
+    width: 100%;
+}
+
+body.verification-mobile .verification-result {
+    position: sticky;
+    top: 74px;
+    z-index: 5;
+    backdrop-filter: blur(6px);
+}
+
+body.verification-mobile .verification-mobile-alt {
+    margin-top: 1rem;
+}
+
+body.verification-mobile .verification-mobile-box {
+    background: var(--bg-card);
+}
+
+@media (max-width: 768px) {
+    body.verification-mobile .verification-container {
+        max-width: 100%;
+    }
+
+    body.verification-mobile .scanner-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    body.verification-mobile .scanner-controls .btn {
+        width: 100%;
+    }
+
+    body.verification-mobile .verification-result {
+        top: 64px;
+    }
+}
+
 .manual-input-section,
 .phone-verify-section {
     text-align: left;

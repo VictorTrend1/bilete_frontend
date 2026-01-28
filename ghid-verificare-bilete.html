@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ghid verificare bilete (verificare.html)</title>
+  <style>
+    :root {
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #e2e8f0;
+      --bg: #ffffff;
+      --bg2: #f8fafc;
+      --ok: #16a34a;
+      --warn: #b45309;
+      --bad: #dc2626;
+      --accent: #2563eb;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+    .page {
+      /* Tablet-first: arată bine pe iPad/Android tablet și rămâne ok pe desktop */
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 22px 16px 54px;
+    }
+    header {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      background: linear-gradient(180deg, var(--bg2), #fff);
+    }
+    h1 {
+      margin: 0 0 6px 0;
+      font-size: 28px;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      color: var(--muted);
+      margin: 0;
+      font-size: 15px;
+    }
+    h2 {
+      margin: 26px 0 10px;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+    }
+    h3 {
+      margin: 16px 0 8px;
+      font-size: 16px;
+    }
+    .box {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 16px 14px;
+      background: #fff;
+      margin: 10px 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+    @media (min-width: 860px) {
+      .grid.two {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+    ul { margin: 10px 0 0 18px; }
+    li { margin: 8px 0; }
+    code {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      padding: 1px 6px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .kbd {
+      font-family: var(--mono);
+      font-size: 12px;
+      background: #0f172a;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+    .tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      margin-right: 6px;
+    }
+    .tag.ok { color: var(--ok); border-color: rgba(22,163,74,.25); background: rgba(22,163,74,.08); }
+    .tag.warn { color: var(--warn); border-color: rgba(180,83,9,.25); background: rgba(180,83,9,.08); }
+    .tag.bad { color: var(--bad); border-color: rgba(220,38,38,.25); background: rgba(220,38,38,.08); }
+    .note {
+      color: var(--muted);
+      font-size: 14px;
+      margin: 8px 0 0;
+    }
+    .callout {
+      border-left: 4px solid var(--accent);
+      background: rgba(37, 99, 235, 0.06);
+      padding: 10px 12px;
+      border-radius: 10px;
+      margin: 12px 0;
+    }
+    .danger {
+      border-left-color: var(--bad);
+      background: rgba(220,38,38,0.06);
+    }
+    .print-hint {
+      margin-top: 12px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .btn {
+      display: inline-block;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      padding: 8px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .btn:hover { border-color: #cbd5e1; }
+    .btn.primary {
+      border-color: rgba(37, 99, 235, .35);
+      background: rgba(37, 99, 235, .08);
+      color: #1d4ed8;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #fff; }
+      header { background: #fff; }
+      .page { padding: 0; }
+      .box, header { break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <h1>Ghid: verificare bilete în <code>verificare.html</code></h1>
+    </header>
+
+    <h2>0) Setup recomandat pentru acces</h2>
+    <div class="box">
+      <ul>
+        <li><strong>Tabletă în landscape</strong>: ecran mare, scanare rapidă, vizibilitate bună la soare.</li>
+        <li><strong>Telefon</strong>: dacă nu există tabletă sau ca dispozitiv de rezervă.</li>
+        <li>Browser recomandat: <strong>Chrome / Edge</strong>.</li>
+        <li>Conexiune: <strong>HTTPS</strong>. Camera nu pornește pe HTTP.</li>
+        <li>Regulă de echipă: 1 persoană scanează, 1 persoană validează/controlează.</li>
+      </ul>
+      <img
+        src="guide_assets/tablet-layout-overview.svg"
+        alt="Cum arată verificarea pe tabletă"
+        style="width:100%; height:auto; border:1px solid var(--border); border-radius:12px; background:#fff; margin-top:10px;"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+
+    <h2>1) Unde intri pentru verificare</h2>
+    <div class="box">
+      <ul>
+        <li>Deschide pagina: <code>verificare.html</code></li>
+        <li>Recomandat: Chrome/Edge pe mobil (pentru cameră + scanare QR).</li>
+      </ul>
+      <p class="note">
+        Dacă scanezi cu camera, pagina are nevoie de context securizat: <strong>HTTPS</strong> sau <strong>localhost</strong>.
+      </p>
+    </div>
+
+    <h2>2) Metode de verificare disponibile</h2>
+    <div class="grid two">
+      <div class="box">
+        <h3>A) Scanare QR</h3>
+        <ul>
+          <li>Apasă <strong>Pornește Scanner</strong>.</li>
+          <li>Acordă permisiunea de cameră.</li>
+          <li>Îndreaptă camera spre QR-ul de pe bilet.</li>
+        </ul>
+        <p class="note">
+          Dacă nu merge camera: vezi secțiunea “Probleme comune”.
+        </p>
+      </div>
+      <div class="box">
+        <h3>B) Introducere manuală</h3>
+        <ul>
+          <li>În “Date QR Code”, lipești textul QR (exact cum este).</li>
+          <li>Apasă <strong>Verifică Bilet</strong>.</li>
+        </ul>
+        <p class="note">
+          Util când nu ai cameră sau când QR-ul e deteriorat, dar ai textul.
+        </p>
+      </div>
+    </div>
+    <div class="box">
+      <h3>C) Verificare prin telefon</h3>
+      <ul>
+        <li>Introdu un număr în format <code>+40712345678</code> sau <code>0712345678</code>.</li>
+        <li>Apasă <strong>Verifică prin Telefon</strong>.</li>
+        <li>Dacă sunt mai multe bilete pe același număr, apare o fereastră de selecție — alegi biletul corect.</li>
+      </ul>
+    </div>
+
+    <h2>2.1) Interfață pe telefon</h2>
+    <div class="box">
+      <p style="margin:0 0 10px 0;">
+        Mai jos ai pașii vizual, ca să instruiești rapid echipa de acces.
+      </p>
+      <img
+        src="guide_assets/phone-steps.svg"
+        alt="Pași verificare bilete pe telefon"
+        style="width:100%; height:auto; border:1px solid var(--border); border-radius:12px; background:#fff;"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+
+    <div class="grid two">
+      <div class="box">
+        <h3>Cum faci screenshot</h3>
+        <ul>
+          <li><strong>Android</strong>: Power + Volume Down (1 sec).</li>
+          <li><strong>iPhone</strong>: Side + Volume Up (sau Home + Side, depinde de model).</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Recomandări pentru scanare</h3>
+        <ul>
+          <li>Lumină bună, fără reflexii pe ecran.</li>
+          <li>Ține QR-ul la ~15–30 cm și mișcă ușor până îl prinde.</li>
+          <li>Dacă nu pornește camera: asigură-te că ești pe <strong>HTTPS</strong> și ai permis accesul la cameră.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>2.2) Pași detaliați — Telefon & Manual QR</h2>
+    <div class="box">
+      <h3>Verificare prin telefon (când QR-ul nu se citește)</h3>
+      <ul>
+        <li>Introdu numărul (recomandat <code>+40…</code> sau <code>07…</code>).</li>
+        <li>Apasă <strong>Verifică prin Telefon</strong>.</li>
+        <li>Dacă apar mai multe bilete, selectează după <strong>tip</strong> și <strong>data creării</strong>.</li>
+      </ul>
+      <img
+        src="guide_assets/phone-verify-by-phone.svg"
+        alt="Pași verificare prin telefon"
+        style="width:100%; height:auto; border:1px solid var(--border); border-radius:12px; background:#fff; margin-top:10px;"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+
+    <div class="box">
+      <h3>Introducere manuală QR</h3>
+      <ul>
+        <li>În “Date QR Code”, lipești <strong>textul complet</strong> (fără să lipsească paranteze/caractere).</li>
+        <li>Apasă <strong>Verifică Bilet</strong>.</li>
+        <li>Dacă primești “Date QR invalide”, recopiază integral textul (de obicei e “tăiat” din mesaj).</li>
+      </ul>
+      <img
+        src="guide_assets/phone-manual-qr-and-flagged.svg"
+        alt="Introducere manuală QR și interpretare bilet suspect"
+        style="width:100%; height:auto; border:1px solid var(--border); border-radius:12px; background:#fff; margin-top:10px;"
+        loading="lazy"
+        decoding="async"
+      />
+      <p class="note">
+        Dacă ai “BILET SUSPECT”, nu valida “din mers” — urmează pașii din secțiunea anti-fraudă.
+      </p>
+    </div>
+
+    <h2>3) Cum interpretezi rezultatul</h2>
+    <div class="box">
+      <p style="margin:0 0 10px 0;">
+        După verificare, apare un rezultat în pagina de verificare:
+      </p>
+      <ul>
+        <li><span class="tag ok">✅ SUCCES</span> “Bilet Verificat cu Succes!” — bilet găsit și marcat ca verificat.</li>
+        <li><span class="tag warn">⚠️ AVERTIZARE</span> “BILET SUSPECT” — biletul a mai fost verificat anterior (posibilă reutilizare).</li>
+        <li><span class="tag bad">❌ EȘEC</span> “Verificare Eșuată” — bilet inexistent / date greșite / răspuns invalid.</li>
+      </ul>
+    </div>
+
+    <h2>4) Reguli anti-fraudă (important)</h2>
+    <div class="box">
+      <p style="margin:0 0 8px 0;">
+        Sistemul ține un contor <code>verification_count</code> și poate marca biletul ca <code>flagged</code>.
+      </p>
+      <ul>
+        <li><strong>Pentru</strong> <code>BAL + AFTER</code> și <code>BAL + AFTER VIP</code>: se permite <strong>2</strong> verificări “OK”; devine <strong>suspect la a 3‑a</strong>.</li>
+        <li><strong>Pentru toate celelalte tipuri</strong>: se permite <strong>1</strong> verificare “OK”; devine <strong>suspect la a 2‑a</strong>.</li>
+      </ul>
+      <div class="callout danger">
+        Dacă apare “BILET SUSPECT”, oprește accesul și verifică manual identitatea / istoricul (este semnal de posibilă duplicare/reutilizare).
+      </div>
+    </div>
+
+    <h2>5) Probleme comune (și soluții rapide)</h2>
+    <div class="grid two">
+      <div class="box">
+        <h3>Camera nu pornește</h3>
+        <ul>
+          <li>Asigură-te că ești pe <strong>HTTPS</strong> (nu HTTP).</li>
+          <li>Verifică permisiunile camerei în browser (Site settings).</li>
+          <li>Închide alte aplicații care folosesc camera (WhatsApp Desktop, Zoom etc.).</li>
+        </ul>
+      </div>
+      <div class="box">
+        <h3>Nu găsește biletul</h3>
+        <ul>
+          <li>Încearcă metoda “Telefon” dacă QR-ul e deteriorat.</li>
+          <li>Asigură-te că textul introdus manual e copiat integral (fără caractere lipsă).</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>6) Note tehnice (pentru admin / suport)</h2>
+    <div class="box">
+      <ul>
+        <li>Verificare prin QR: <code>POST /api/verify-ticket</code> cu body <code>{"qrData": "..."}</code></li>
+        <li>Verificare prin telefon: <code>POST /api/verify-ticket-by-phone</code> cu body <code>{"phoneNumber": "..."}</code></li>
+        <li>Selecție când sunt mai multe bilete: <code>POST /api/verify-ticket-by-id/:id</code></li>
+      </ul>
+      <p class="note">
+        La telefon, backend-ul caută în mai multe formate (+40 / 07 / ultimele 9 cifre) și poate întoarce o listă de bilete pentru selecție.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+
