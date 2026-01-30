@@ -2110,6 +2110,9 @@ function showVerificationResult(ticket, success, errorMessage = null, responseDa
 // QR Code Scanner
 let scannerActive = false;
 let html5QrCodeInstance = null;
+let lastScannedCode = null;
+let lastScanTime = 0;
+const SCAN_DEBOUNCE_MS = 2000; // Prevent duplicate scans within 2 seconds
 
 async function startScanner() {
     if (scannerActive) return;
@@ -2119,6 +2122,16 @@ async function startScanner() {
     const stopBtn = document.getElementById('stop-scanner');
 
     if (!scannerContainer || !startBtn || !stopBtn) return;
+    
+    // Clean up any existing feedback elements
+    const existingFeedback = scannerContainer.querySelector('.scan-feedback');
+    if (existingFeedback) {
+        existingFeedback.remove();
+    }
+    
+    // Reset scan tracking when starting fresh
+    lastScannedCode = null;
+    lastScanTime = 0;
 
     try {
         // Enhanced security context check
@@ -2271,10 +2284,65 @@ async function startScanner() {
                 
                 console.log("QR Code detected:", decodedText);
                 
-                // Stop scanner immediately to prevent multiple scans
-                stopScanner();
+                // Debounce: prevent duplicate scans of the same code within 2 seconds
+                const now = Date.now();
+                if (decodedText === lastScannedCode && (now - lastScanTime) < SCAN_DEBOUNCE_MS) {
+                    console.log("Duplicate scan ignored (debounce)");
+                    return;
+                }
                 
-                // Process the scanned data immediately
+                // Update last scanned code and time
+                lastScannedCode = decodedText;
+                lastScanTime = now;
+                
+                // Show brief visual feedback that scan was successful
+                const scannerContainer = document.getElementById('scanner-container');
+                if (scannerContainer) {
+                    // Remove any existing feedback elements first
+                    const existingFeedback = scannerContainer.querySelector('.scan-feedback');
+                    if (existingFeedback) {
+                        existingFeedback.remove();
+                    }
+                    
+                    // Ensure container has relative positioning for absolute feedback
+                    if (scannerContainer.style.position !== 'relative') {
+                        scannerContainer.style.position = 'relative';
+                    }
+                    
+                    const feedback = document.createElement('div');
+                    feedback.className = 'scan-feedback';
+                    feedback.style.cssText = `
+                        position: absolute;
+                        top: 20px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        background: rgba(16, 185, 129, 0.95);
+                        color: white;
+                        padding: 12px 24px;
+                        border-radius: 8px;
+                        font-weight: 600;
+                        z-index: 1000;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                        animation: fadeInOut 1.5s ease;
+                        pointer-events: none;
+                    `;
+                    feedback.innerHTML = '<i class="fas fa-check-circle"></i> Bilet scanat! Continuă să scanezi...';
+                    scannerContainer.appendChild(feedback);
+                    
+                    // Remove feedback after animation
+                    setTimeout(() => {
+                        if (feedback.parentNode) {
+                            feedback.remove();
+                        }
+                    }, 1500);
+                }
+                
+                // Try to trigger haptic feedback on mobile devices (if supported)
+                if (navigator.vibrate) {
+                    navigator.vibrate(100); // Short vibration
+                }
+                
+                // Process the scanned data immediately (scanner continues running)
                 try {
                     // Try to parse as JSON first
                     const parsed = JSON.parse(decodedText);
@@ -2340,6 +2408,14 @@ async function stopScanner() {
     const startBtn = document.getElementById('start-scanner');
     const stopBtn = document.getElementById('stop-scanner');
 
+    // Clean up any feedback elements
+    if (scannerContainer) {
+        const existingFeedback = scannerContainer.querySelector('.scan-feedback');
+        if (existingFeedback) {
+            existingFeedback.remove();
+        }
+    }
+
     // Reset button states immediately
     if (startBtn) {
         startBtn.style.display = 'inline-block';
@@ -2348,6 +2424,10 @@ async function stopScanner() {
     }
     if (stopBtn) stopBtn.style.display = 'none';
     if (scannerContainer) scannerContainer.style.display = 'none';
+
+    // Reset scan tracking
+    lastScannedCode = null;
+    lastScanTime = 0;
 
     // Stop the scanner instance
     try {

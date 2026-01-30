@@ -1636,6 +1636,25 @@ body.verification-mobile .verification-mobile-box {
     background: rgba(255, 255, 255, 0.4);
 }
 
+@keyframes fadeInOut {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    20% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    80% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+}
+
 @keyframes slideDown {
     from {
         opacity: 0;
