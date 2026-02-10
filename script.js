@@ -406,6 +406,15 @@ async function verifyTicketFromButton(el) {
     const id = el.getAttribute('data-id');
     if (!id) return;
     
+    // Check if user's group is active
+    const user = getUser();
+    const groupActive = user && user.groupActive !== undefined ? user.groupActive : true;
+    
+    if (!groupActive) {
+        showError('Evenimentul s-a terminat. Nu mai poți valida bilete.');
+        return;
+    }
+    
     try {
         const token = getToken();
         if (!token) {
@@ -1396,10 +1405,10 @@ function displayTicketsTable() {
                 <button class="btn btn-danger" data-id="${ticketId}" onclick="deleteTicket(this)">
                     <i class="fas fa-trash"></i> Șterge
                 </button>
-                ` : ''}
                 <button class="btn btn-info" data-id="${ticketId}" onclick="verifyTicketFromButton(this)">
                     <i class="fas fa-check-circle"></i> Validare bilet
                 </button>
+                ` : ''}
             </td>
         `;
         
