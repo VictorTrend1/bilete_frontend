@@ -2697,6 +2697,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const userNameElement = document.getElementById('user-name');
             const userGroupElement = document.getElementById('user-group');
             const userGroupDisplayElement = document.getElementById('user-group-display');
+            const adminToolsSection = document.getElementById('admin-tools-section');
             
             if (userNameElement) {
                 userNameElement.textContent = user.username;
@@ -2706,6 +2707,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (userGroupDisplayElement && user.group) {
                 userGroupDisplayElement.textContent = user.group;
+            }
+            
+            // Show Admin Tools section only for Administrator
+            if (adminToolsSection && user.group === 'Administrator') {
+                adminToolsSection.style.display = 'block';
             }
         }
 

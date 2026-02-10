@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Tools - Site Bilete</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .admin-section {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .admin-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+        
+        .group-list, .ticket-list {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .group-item, .ticket-item {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .group-item.inactive, .ticket-item.inactive {
+            opacity: 0.6;
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success-color);
+        }
+        
+        .status-badge.inactive {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger-color);
+        }
+        
+        .form-inline {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .form-inline input {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1 class="nav-logo">🎫 Admin Tools</h1>
+            <div class="nav-menu">
+                <a href="dashboard.html" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="admin-tools.html" class="nav-link active">
+                    <i class="fas fa-tools"></i>
+                    <span>Admin Tools</span>
+                </a>
+                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+                    <i class="fas fa-moon"></i>
+                    <span>Întunecat</span>
+                </button>
+                <button class="logout-btn" id="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Deconectare</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="admin-container">
+            <div class="admin-section">
+                <h2><i class="fas fa-users"></i> Gestionare Grupuri</h2>
+                
+                <div class="form-inline">
+                    <input type="text" id="new-group-name" placeholder="Nume grup nou" class="form-control">
+                    <input type="text" id="new-group-code" placeholder="Cod referral (opțional)" class="form-control">
+                    <button class="btn btn-primary" onclick="createGroup()">
+                        <i class="fas fa-plus"></i> Creează Grup
+                    </button>
+                </div>
+                
+                <div id="groups-list" class="group-list">
+                    <p>Se încarcă...</p>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h2><i class="fas fa-ticket-alt"></i> Gestionare Bilete</h2>
+                
+                <div class="form-group">
+                    <label for="ticket-search">Caută bilet (ID sau nume):</label>
+                    <input type="text" id="ticket-search" class="form-control" placeholder="Introdu ID sau nume...">
+                    <button class="btn btn-primary mt-2" onclick="searchTicket()">
+                        <i class="fas fa-search"></i> Caută
+                    </button>
+                </div>
+                
+                <div id="tickets-list" class="ticket-list">
+                    <p>Folosește căutarea pentru a găsi bilete.</p>
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h2><i class="fas fa-user-shield"></i> Gestionare Utilizatori</h2>
+                
+                <button class="btn btn-primary mb-3" onclick="loadUsers()">
+                    <i class="fas fa-sync"></i> Reîncarcă Utilizatori
+                </button>
+                
+                <div id="users-list" class="group-list">
+                    <p>Apasă "Reîncarcă Utilizatori" pentru a vedea lista.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 Site Bilete. Toate drepturile rezervate.</p>
+        <p><a href="termeni.html" style="color: rgba(255, 255, 255, 0.9); text-decoration: none;">Termeni și Condiții</a></p>
+        <p>Made by VictorTrend1</p>
+    </footer>
+
+    <script>
+        // API_BASE_URL will be loaded from script.js
+        let API_BASE_URL = 'https://bilete-backend.onrender.com/api';
+    </script>
+    <script src="script.js"></script>
+    <script>
+        // Use API_BASE_URL from script.js (it's defined globally there)
+        if (typeof API_BASE_URL === 'undefined') {
+            API_BASE_URL = 'https://bilete-backend.onrender.com/api';
+        }
+        
+        // Check if user is Administrator
+        document.addEventListener('DOMContentLoaded', function() {
+            const user = getUser();
+            if (!user || user.group !== 'Administrator') {
+                showError('Acces restricționat. Doar utilizatorii Administrator pot accesa această pagină.');
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 2000);
+                return;
+            }
+            
+            loadGroups();
+        });
+        
+        async function loadGroups() {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/admin/groups`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load groups');
+                }
+                
+                const data = await response.json();
+                displayGroups(data.groups);
+            } catch (error) {
+                console.error('Error loading groups:', error);
+                showError('Eroare la încărcarea grupurilor');
+            }
+        }
+        
+        function displayGroups(groups) {
+            const container = document.getElementById('groups-list');
+            if (!groups || groups.length === 0) {
+                container.innerHTML = '<p>Nu există grupuri.</p>';
+                return;
+            }
+            
+            container.innerHTML = groups.map(group => `
+                <div class="group-item ${group.active ? '' : 'inactive'}">
+                    <div>
+                        <strong>${group.name}</strong>
+                        ${group.referral_code ? `<br><small>Cod: ${group.referral_code}</small>` : ''}
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span class="status-badge ${group.active ? 'active' : 'inactive'}">
+                            ${group.active ? '✓ Activ' : '✗ Dezactivat'}
+                        </span>
+                        <button class="btn btn-sm ${group.active ? 'btn-danger' : 'btn-success'}" 
+                                onclick="toggleGroupStatus('${group.name}', ${!group.active})">
+                            ${group.active ? '<i class="fas fa-ban"></i> Dezactivează' : '<i class="fas fa-check"></i> Activează'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function createGroup() {
+            const name = document.getElementById('new-group-name').value.trim();
+            const code = document.getElementById('new-group-code').value.trim();
+            
+            if (!name) {
+                showError('Introdu numele grupului');
+                return;
+            }
+            
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/admin/groups`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, referral_code: code || undefined })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to create group');
+                }
+                
+                showSuccess('Grup creat cu succes!');
+                document.getElementById('new-group-name').value = '';
+                document.getElementById('new-group-code').value = '';
+                loadGroups();
+            } catch (error) {
+                console.error('Error creating group:', error);
+                showError(error.message || 'Eroare la crearea grupului');
+            }
+        }
+        
+        async function toggleGroupStatus(groupName, active) {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/admin/groups/${encodeURIComponent(groupName)}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ active })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update group status');
+                }
+                
+                showSuccess(`Grup ${active ? 'activat' : 'dezactivat'} cu succes!`);
+                loadGroups();
+            } catch (error) {
+                console.error('Error updating group status:', error);
+                showError(error.message || 'Eroare la actualizarea statusului grupului');
+            }
+        }
+        
+        async function searchTicket() {
+            const search = document.getElementById('ticket-search').value.trim();
+            if (!search) {
+                showError('Introdu ID sau nume bilet');
+                return;
+            }
+            
+            try {
+                const token = getToken();
+                // Try to find by ID first, then by name
+                let response = await fetch(`${API_BASE_URL}/admin/tickets`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load tickets');
+                }
+                
+                const data = await response.json();
+                const tickets = data.tickets || [];
+                
+                // Filter tickets
+                const filtered = tickets.filter(t => 
+                    t._id === search || 
+                    t.nume.toLowerCase().includes(search.toLowerCase())
+                );
+                
+                if (filtered.length === 0) {
+                    document.getElementById('tickets-list').innerHTML = '<p>Nu s-au găsit bilete.</p>';
+                    return;
+                }
+                
+                displayTickets(filtered.slice(0, 20)); // Show max 20 results
+            } catch (error) {
+                console.error('Error searching tickets:', error);
+                showError('Eroare la căutarea biletelor');
+            }
+        }
+        
+        function displayTickets(tickets) {
+            const container = document.getElementById('tickets-list');
+            container.innerHTML = tickets.map(ticket => `
+                <div class="ticket-item ${ticket.active !== false ? '' : 'inactive'}">
+                    <div>
+                        <strong>${ticket.nume}</strong>
+                        <br><small>${ticket.telefon} | ${ticket.tip_bilet} | ${ticket.group}</small>
+                        <br><small>ID: ${ticket._id}</small>
+                    </div>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <span class="status-badge ${ticket.active !== false ? 'active' : 'inactive'}">
+                            ${ticket.active !== false ? '✓ Activ' : '✗ Dezactivat'}
+                        </span>
+                        <button class="btn btn-sm ${ticket.active !== false ? 'btn-danger' : 'btn-success'}" 
+                                onclick="toggleTicketStatus('${ticket._id}', ${ticket.active !== false ? 'false' : 'true'})">
+                            ${ticket.active !== false ? '<i class="fas fa-ban"></i> Dezactivează' : '<i class="fas fa-check"></i> Activează'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        async function toggleTicketStatus(ticketId, active) {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ active })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update ticket status');
+                }
+                
+                showSuccess(`Bilet ${active ? 'activat' : 'dezactivat'} cu succes!`);
+                searchTicket(); // Refresh the list
+            } catch (error) {
+                console.error('Error updating ticket status:', error);
+                showError(error.message || 'Eroare la actualizarea statusului biletului');
+            }
+        }
+        
+        async function loadUsers() {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/admin/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load users');
+                }
+                
+                const data = await response.json();
+                displayUsers(data.users);
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showError('Eroare la încărcarea utilizatorilor');
+            }
+        }
+        
+        function displayUsers(users) {
+            const container = document.getElementById('users-list');
+            if (!users || users.length === 0) {
+                container.innerHTML = '<p>Nu există utilizatori.</p>';
+                return;
+            }
+            
+            const currentUser = getUser();
+            const currentUserId = currentUser ? currentUser.id : null;
+            
+            container.innerHTML = users.map(user => {
+                const isCurrentUser = user._id === currentUserId;
+                const isActive = user.active !== undefined ? user.active : true;
+                
+                return `
+                    <div class="group-item ${isActive ? '' : 'inactive'}">
+                        <div>
+                            <strong>${user.username}</strong>
+                            ${isCurrentUser ? ' <span style="color: #667eea;">(Tu)</span>' : ''}
+                            <br><small>Grup: ${user.group}</small>
+                            <br><small>Înregistrat: ${new Date(user.created_at).toLocaleDateString('ro-RO')}</small>
+                            ${user._id ? `<br><small>ID: ${user._id}</small>` : ''}
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <span class="status-badge ${isActive ? 'active' : 'inactive'}">
+                                ${isActive ? '✓ Activ' : '✗ Dezactivat'}
+                            </span>
+                            ${!isCurrentUser ? `
+                                <button class="btn btn-sm ${isActive ? 'btn-danger' : 'btn-success'}" 
+                                        onclick="toggleUserStatus('${user._id}', ${!isActive})">
+                                    ${isActive ? '<i class="fas fa-ban"></i> Dezactivează' : '<i class="fas fa-check"></i> Activează'}
+                                </button>
+                            ` : '<span style="color: #999; font-size: 0.875rem;">Cont propriu</span>'}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        async function toggleUserStatus(userId, active) {
+            try {
+                const token = getToken();
+                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ active })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to update user status');
+                }
+                
+                showSuccess(`Cont ${active ? 'activat' : 'dezactivat'} cu succes!`);
+                loadUsers(); // Refresh the list
+            } catch (error) {
+                console.error('Error updating user status:', error);
+                showError(error.message || 'Eroare la actualizarea statusului contului');
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
