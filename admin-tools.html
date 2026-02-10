@@ -90,7 +90,7 @@
                     <i class="fas fa-tools"></i>
                     <span>Admin Tools</span>
                 </a>
-                <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
+                <button class="theme-toggle" id="theme-toggle">
                     <i class="fas fa-moon"></i>
                     <span>Întunecat</span>
                 </button>
@@ -156,33 +156,41 @@
         <p>Made by VictorTrend1</p>
     </footer>
 
-    <script>
-        // API_BASE_URL will be loaded from script.js
-        let API_BASE_URL = 'https://bilete-backend.onrender.com/api';
-    </script>
     <script src="script.js"></script>
     <script>
-        // Use API_BASE_URL from script.js (it's defined globally there)
-        if (typeof API_BASE_URL === 'undefined') {
-            API_BASE_URL = 'https://bilete-backend.onrender.com/api';
-        }
-        
-        // Check if user is Administrator
+        // Wait for script.js to fully load
         document.addEventListener('DOMContentLoaded', function() {
-            const user = getUser();
-            if (!user || user.group !== 'Administrator') {
-                showError('Acces restricționat. Doar utilizatorii Administrator pot accesa această pagină.');
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 2000);
-                return;
+            // Setup theme toggle button
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle && typeof toggleTheme === 'function') {
+                themeToggle.addEventListener('click', toggleTheme);
             }
             
-            loadGroups();
+            // Check if user is Administrator
+            if (typeof getUser === 'function') {
+                const user = getUser();
+                if (!user || user.group !== 'Administrator') {
+                    if (typeof showError === 'function') {
+                        showError('Acces restricționat. Doar utilizatorii Administrator pot accesa această pagină.');
+                    }
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 2000);
+                    return;
+                }
+                
+                loadGroups();
+            } else {
+                console.error('getUser function not available');
+            }
         });
         
         async function loadGroups() {
             try {
+                if (typeof getToken !== 'function') {
+                    console.error('getToken function not available');
+                    return;
+                }
                 const token = getToken();
                 const response = await fetch(`${API_BASE_URL}/admin/groups`, {
                     headers: {
@@ -198,7 +206,9 @@
                 displayGroups(data.groups);
             } catch (error) {
                 console.error('Error loading groups:', error);
-                showError('Eroare la încărcarea grupurilor');
+                if (typeof showError === 'function') {
+                    showError('Eroare la încărcarea grupurilor');
+                }
             }
         }
         
@@ -233,11 +243,17 @@
             const code = document.getElementById('new-group-code').value.trim();
             
             if (!name) {
-                showError('Introdu numele grupului');
+                if (typeof showError === 'function') {
+                    showError('Introdu numele grupului');
+                }
                 return;
             }
             
             try {
+                if (typeof getToken !== 'function') {
+                    console.error('getToken function not available');
+                    return;
+                }
                 const token = getToken();
                 const response = await fetch(`${API_BASE_URL}/admin/groups`, {
                     method: 'POST',
@@ -254,18 +270,26 @@
                     throw new Error(data.error || 'Failed to create group');
                 }
                 
-                showSuccess('Grup creat cu succes!');
+                if (typeof showSuccess === 'function') {
+                    showSuccess('Grup creat cu succes!');
+                }
                 document.getElementById('new-group-name').value = '';
                 document.getElementById('new-group-code').value = '';
                 loadGroups();
             } catch (error) {
                 console.error('Error creating group:', error);
-                showError(error.message || 'Eroare la crearea grupului');
+                if (typeof showError === 'function') {
+                    showError(error.message || 'Eroare la crearea grupului');
+                }
             }
         }
         
         async function toggleGroupStatus(groupName, active) {
             try {
+                if (typeof getToken !== 'function') {
+                    console.error('getToken function not available');
+                    return;
+                }
                 const token = getToken();
                 const response = await fetch(`${API_BASE_URL}/admin/groups/${encodeURIComponent(groupName)}/status`, {
                     method: 'PUT',
@@ -282,22 +306,32 @@
                     throw new Error(data.error || 'Failed to update group status');
                 }
                 
-                showSuccess(`Grup ${active ? 'activat' : 'dezactivat'} cu succes!`);
+                if (typeof showSuccess === 'function') {
+                    showSuccess(`Grup ${active ? 'activat' : 'dezactivat'} cu succes!`);
+                }
                 loadGroups();
             } catch (error) {
                 console.error('Error updating group status:', error);
-                showError(error.message || 'Eroare la actualizarea statusului grupului');
+                if (typeof showError === 'function') {
+                    showError(error.message || 'Eroare la actualizarea statusului grupului');
+                }
             }
         }
         
         async function searchTicket() {
             const search = document.getElementById('ticket-search').value.trim();
             if (!search) {
-                showError('Introdu ID sau nume bilet');
+                if (typeof showError === 'function') {
+                    showError('Introdu ID sau nume bilet');
+                }
                 return;
             }
             
             try {
+                if (typeof getToken !== 'function') {
+                    console.error('getToken function not available');
+                    return;
+                }
                 const token = getToken();
                 // Try to find by ID first, then by name
                 let response = await fetch(`${API_BASE_URL}/admin/tickets`, {
@@ -327,7 +361,9 @@
                 displayTickets(filtered.slice(0, 20)); // Show max 20 results
             } catch (error) {
                 console.error('Error searching tickets:', error);
-                showError('Eroare la căutarea biletelor');
+                if (typeof showError === 'function') {
+                    showError('Eroare la căutarea biletelor');
+                }
             }
         }
         
@@ -355,6 +391,10 @@
         
         async function toggleTicketStatus(ticketId, active) {
             try {
+                if (typeof getToken !== 'function') {
+                    console.error('getToken function not available');
+                    return;
+                }
                 const token = getToken();
                 const response = await fetch(`${API_BASE_URL}/admin/tickets/${ticketId}/status`, {
                     method: 'PUT',
@@ -371,16 +411,24 @@
                     throw new Error(data.error || 'Failed to update ticket status');
                 }
                 
-                showSuccess(`Bilet ${active ? 'activat' : 'dezactivat'} cu succes!`);
+                if (typeof showSuccess === 'function') {
+                    showSuccess(`Bilet ${active ? 'activat' : 'dezactivat'} cu succes!`);
+                }
                 searchTicket(); // Refresh the list
             } catch (error) {
                 console.error('Error updating ticket status:', error);
-                showError(error.message || 'Eroare la actualizarea statusului biletului');
+                if (typeof showError === 'function') {
+                    showError(error.message || 'Eroare la actualizarea statusului biletului');
+                }
             }
         }
         
         async function loadUsers() {
             try {
+                if (typeof getToken !== 'function') {
+                    console.error('getToken function not available');
+                    return;
+                }
                 const token = getToken();
                 const response = await fetch(`${API_BASE_URL}/admin/users`, {
                     headers: {
@@ -396,7 +444,9 @@
                 displayUsers(data.users);
             } catch (error) {
                 console.error('Error loading users:', error);
-                showError('Eroare la încărcarea utilizatorilor');
+                if (typeof showError === 'function') {
+                    showError('Eroare la încărcarea utilizatorilor');
+                }
             }
         }
         
@@ -407,8 +457,11 @@
                 return;
             }
             
-            const currentUser = getUser();
-            const currentUserId = currentUser ? currentUser.id : null;
+            let currentUserId = null;
+            if (typeof getUser === 'function') {
+                const currentUser = getUser();
+                currentUserId = currentUser ? currentUser.id : null;
+            }
             
             container.innerHTML = users.map(user => {
                 const isCurrentUser = user._id === currentUserId;
@@ -441,6 +494,10 @@
         
         async function toggleUserStatus(userId, active) {
             try {
+                if (typeof getToken !== 'function') {
+                    console.error('getToken function not available');
+                    return;
+                }
                 const token = getToken();
                 const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
                     method: 'PUT',
@@ -457,11 +514,15 @@
                     throw new Error(data.error || 'Failed to update user status');
                 }
                 
-                showSuccess(`Cont ${active ? 'activat' : 'dezactivat'} cu succes!`);
+                if (typeof showSuccess === 'function') {
+                    showSuccess(`Cont ${active ? 'activat' : 'dezactivat'} cu succes!`);
+                }
                 loadUsers(); // Refresh the list
             } catch (error) {
                 console.error('Error updating user status:', error);
-                showError(error.message || 'Eroare la actualizarea statusului contului');
+                if (typeof showError === 'function') {
+                    showError(error.message || 'Eroare la actualizarea statusului contului');
+                }
             }
         }
     </script>
