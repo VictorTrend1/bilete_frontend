@@ -15,7 +15,7 @@ const getApiBaseUrl = () => {
   }
   
   // Default to production (for other domains)
-  return 'https://bilete-backend.onrender.com/api';
+  return 'http://localhost:3001/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -1021,6 +1021,15 @@ async function sendQRCodeViaBot(ticketId, phoneNumber) {
 // Enhanced ticket sending with WhatsApp redirect
 async function sendTicketViaBotEnhanced(el) {
     try {
+        // Check if user's group is active
+        const user = getUser();
+        const groupActive = user && user.groupActive !== undefined ? user.groupActive : true;
+        
+        if (!groupActive) {
+            showError('Evenimentul s-a terminat. Nu mai poți trimite bilete.');
+            return;
+        }
+        
         const ticket = JSON.parse(el.getAttribute('data-ticket').replace(/&apos;/g, "'"));
         let phoneNumber = ticket.telefon.replace(/\D/g, ''); // Remove non-digits
         
@@ -1243,6 +1252,15 @@ function updateTicketsSummary() {
 
 // Update ticket sent status
 async function updateTicketSentStatus(checkbox) {
+    // Check if user's group is active
+    const user = getUser();
+    const groupActive = user && user.groupActive !== undefined ? user.groupActive : true;
+    
+    if (!groupActive) {
+        checkbox.checked = !checkbox.checked; // Revert checkbox
+        showError('Evenimentul s-a terminat. Nu mai poți modifica statusul biletelor.');
+        return;
+    }
     try {
         const ticketId = checkbox.getAttribute('data-ticket-id');
         const sent = checkbox.checked;
@@ -1320,6 +1338,10 @@ function displayTicketsTable() {
     // Use DocumentFragment for better performance
     const fragment = document.createDocumentFragment();
     
+    // Check if user's group is active (once, outside the loop)
+    const user = getUser();
+    const groupActive = user && user.groupActive !== undefined ? user.groupActive : true;
+    
     paginatedTickets.forEach((ticket, index) => {
         const row = document.createElement('tr');
         const globalIndex = startIndex + index;
@@ -1345,6 +1367,7 @@ function displayTicketsTable() {
                 ${ticket.verified ? '✅ Verificat' : '⏳ Ne verificat'}
             </td>
             <td class="sent-status">
+                ${groupActive ? `
                 <label class="sent-checkbox-label">
                     <input type="checkbox" 
                            class="sent-checkbox" 
@@ -1354,6 +1377,7 @@ function displayTicketsTable() {
                     <span class="checkmark"></span>
                     ${ticket.sent ? 'Trimis' : 'Netrimis'}
                 </label>
+                ` : `<span style="color: #999;">${ticket.sent ? 'Trimis' : 'Netrimis'}</span>`}
             </td>
             <td class="actions">
                 <button class="btn btn-primary" data-id="${ticketId}" onclick="viewTicketFromButton(this)">
@@ -1362,6 +1386,7 @@ function displayTicketsTable() {
                 <button class="btn btn-secondary" data-id="${ticketId}" onclick="downloadTicketQRFromButton(this)">
                     <i class="fas fa-download"></i> Descarcă cod QR
                 </button>
+                ${groupActive ? `
                 <button class="btn btn-warning" data-id="${ticketId}" data-tip-bilet="${escapeHtml(ticket.tip_bilet)}" onclick="editTicketType(this)">
                     <i class="fas fa-edit"></i> Editează tip bilet
                 </button>
@@ -1371,6 +1396,7 @@ function displayTicketsTable() {
                 <button class="btn btn-danger" data-id="${ticketId}" onclick="deleteTicket(this)">
                     <i class="fas fa-trash"></i> Șterge
                 </button>
+                ` : ''}
                 <button class="btn btn-info" data-id="${ticketId}" onclick="verifyTicketFromButton(this)">
                     <i class="fas fa-check-circle"></i> Validare bilet
                 </button>
@@ -1479,6 +1505,14 @@ async function sendTicketViaWhatsApp(el) {
 }
 
 async function deleteTicket(el) {
+    // Check if user's group is active
+    const user = getUser();
+    const groupActive = user && user.groupActive !== undefined ? user.groupActive : true;
+    
+    if (!groupActive) {
+        showError('Evenimentul s-a terminat. Nu mai poți șterge bilete.');
+        return;
+    }
     const ticketId = el.getAttribute('data-id');
     if (!ticketId) return;
     
@@ -1555,6 +1589,14 @@ async function deleteTicket(el) {
 let currentEditTicketId = null;
 
 function editTicketType(el) {
+    // Check if user's group is active
+    const user = getUser();
+    const groupActive = user && user.groupActive !== undefined ? user.groupActive : true;
+    
+    if (!groupActive) {
+        showError('Evenimentul s-a terminat. Nu mai poți edita bilete.');
+        return;
+    }
     const ticketId = el.getAttribute('data-id');
     const currentTipBilet = el.getAttribute('data-tip-bilet');
     
@@ -2717,6 +2759,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const userGroupElement = document.getElementById('user-group');
             const userGroupDisplayElement = document.getElementById('user-group-display');
             const adminToolsSection = document.getElementById('admin-tools-section');
+            const ticketFormSection = document.getElementById('ticket-form-section');
+            const ticketForm = document.getElementById('ticket-form');
+            const groupInactiveBanner = document.getElementById('group-inactive-banner');
             
             if (userNameElement) {
                 userNameElement.textContent = user.username;
@@ -2731,6 +2776,28 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show Admin Tools section only for Administrator
             if (adminToolsSection && user.group === 'Administrator') {
                 adminToolsSection.style.display = 'block';
+            }
+            
+            // Check if group is inactive - disable ticket creation
+            const groupActive = user.groupActive !== undefined ? user.groupActive : true;
+            if (!groupActive) {
+                if (groupInactiveBanner) {
+                    groupInactiveBanner.style.display = 'block';
+                }
+                if (ticketForm) {
+                    // Disable all form inputs
+                    const inputs = ticketForm.querySelectorAll('input, select, button');
+                    inputs.forEach(input => {
+                        input.disabled = true;
+                        input.style.opacity = '0.5';
+                        input.style.cursor = 'not-allowed';
+                    });
+                    // Prevent form submission
+                    ticketForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        showError('Evenimentul s-a terminat. Nu mai poți crea bilete noi.');
+                    });
+                }
             }
         }
 

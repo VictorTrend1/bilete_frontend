@@ -70,8 +70,12 @@
             </div>
 
             <div class="dashboard-content">
-                <div class="ticket-form-section">
+                <div class="ticket-form-section" id="ticket-form-section">
                     <h3>Creează Bilet Nou</h3>
+                    <div id="group-inactive-banner" class="event-ended-banner" style="display: none; margin-bottom: 20px;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Evenimentul s-a terminat. Poți doar să vizualizezi biletele existente.
+                    </div>
                     <div class="group-info" id="group-info">
                         <p><strong>Grupul tău:</strong> <span id="user-group-display"></span></p>
                         <small>Biletul va fi creat pentru acest grup</small>
