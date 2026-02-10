@@ -1,5 +1,24 @@
 // API Configuration
-const API_BASE_URL = 'https://bilete-backend.onrender.com/api';
+// Auto-detect API URL based on current hostname
+const getApiBaseUrl = () => {
+  const hostname = window.location.hostname;
+  const protocol = window.location.protocol;
+  
+  // Production domain - use same domain (nginx will proxy to backend)
+  if (hostname === 'www.site-bilete.shop' || hostname === 'site-bilete.shop') {
+    return `${protocol}//${hostname}/api`;
+  }
+  
+  // Local development
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.') || hostname.startsWith('10.')) {
+    return 'http://localhost:3001/api';
+  }
+  
+  // Default to production (for other domains)
+  return 'https://bilete-backend.onrender.com/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Messaging Service Configuration
 let messagingStatus = null;
